@@ -72,7 +72,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                 {
                     // 这里根据后续新建的 UserControl 名字一一对应即可
                     "Nameplate" => _containerProvider.Resolve<NamePlateView>(),
-                    // "DcResistance" => _containerProvider.Resolve<DcResistanceView>(),
+                    //"DcResistance" => _containerProvider.Resolve<DcResistanceView>(),
                     // "NoLoad"       => _containerProvider.Resolve<NoLoadTestView>(),
                     _ => null
                 };

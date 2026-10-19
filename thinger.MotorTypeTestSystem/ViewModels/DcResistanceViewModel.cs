@@ -16,6 +16,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
     {
         private readonly IMotorTestRepository _repo;
         private readonly ILogger _logger;
+        private readonly TagPoolService _tagPool; //接受数据读取点位池服务
 
         //保存从主控台传过来的电机铭牌（含电机的流水号 Id、材料常数 K1 等）
         [ObservableProperty]
@@ -26,12 +27,14 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         private DcResistanceRecord _dcRecord = new();
 
 
-        public DcResistanceViewModel(IMotorTestRepository repo, ILogger logger)
+        public DcResistanceViewModel(IMotorTestRepository repo, ILogger logger, TagPoolService tagPool)
         {
             _repo = repo;
             _logger = logger;
+            _tagPool = tagPool;
         }
 
+        #region 当切换到本页面时，总控台自动把电机的建档信息传进来
         /// <summary>
         /// 当切换到本页面时，总控台自动把电机的建档信息传进来
         /// </summary>
@@ -65,7 +68,9 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                 _logger.Error(ex, "加载直流电阻试验历史数据失败");
             }
         }
+        #endregion
 
+        #region 点击【计算数据】按钮触发(按照国家标准 GB/T 1032 进行精确数学换算)
         /// <summary>
         /// 命令一：点击【计算数据】按钮触发
         /// 按照国家标准 GB/T 1032 进行精确数学换算
@@ -92,8 +97,59 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             // 绝大部分电机是铜线(K1=235)，铝线(K1=225)。直接读取铭牌里存的 K1！
             double k1 = Motor_record?.K1 > 0 ? Motor_record.K1 : 235.0;
             DcRecord.ResistanceAt20C = Math.Round(avg * (k1 + 20.0) / (k1 + DcRecord.WindingTemp), 5);
-            // 4. 自动合格判定 (国标通常规定：三相不平衡度 <= 2.0% 为合格)
-            DcRecord.IsQualified = DcRecord.UnbalanceRate <= 2.0;
+            // 4. 自动合格判定 (国标通常规定：默认三相不平衡度 <=2.0% 为合格)
+            DcRecord.IsQualified = DcRecord.UnbalanceRate <= DcRecord.MaxAllowedUnbalance;
         }
+        #endregion
+
+        #region 点击保存数据按钮（保存前会自动先计算一次，确保数据最新，然后存入数据库）
+        /// <summary>
+        /// 命令二：点击【保存数据】按钮触发
+        /// 保存前会自动先计算一次，确保数据最新，然后存入数据库
+        /// </summary>
+        [RelayCommand]
+        public async Task Save()
+        {
+            if (Motor_record == null || string.IsNullOrWhiteSpace(DcRecord.RecordId))
+            {
+                Growl.Warning("未关联有效的试验主记录，无法保存！");
+                return;
+            }
+
+            // 1. 保存前强制触发一次自动计算，防呆防漏
+            Calculate();
+
+            // 2. 检查是否有数据
+            if (DcRecord.Ruv <= 0 || DcRecord.Rvw <= 0 || DcRecord.Rwu <= 0)
+            {
+                Growl.Warning("三相线电阻数据必须大于 0，请检查输入！");
+                return;
+            }
+
+            try
+            {
+                DcRecord.TestTime = DateTime.Now;
+                // 3. 调用仓储层的保存/更新接口
+                bool success = await _repo.SaveDcResistanceAsync(DcRecord);
+                if (success)
+                {
+                    Growl.Success("直流电阻试验数据保存成功！");
+                    _logger.Information($"电机 [{DcRecord.RecordId}] 直流电阻试验数据保存成功");
+                }
+                else
+                {
+                    Growl.Error("直流电阻数据保存失败，请检查数据库连接！");
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                _logger.Error(ex, "保存直流电阻数据时发生异常");
+                Growl.Fatal($"保存失败：{ex.Message}");
+            }
+        }
+        #endregion
+
     }
 }
