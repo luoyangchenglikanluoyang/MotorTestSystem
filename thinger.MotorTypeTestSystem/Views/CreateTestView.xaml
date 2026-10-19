@@ -1,0 +1,309 @@
+<UserControl
+    x:Class="thinger.MotorTypeTestSystem.Views.CreateTestView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:prism="http://prismlibrary.com/"
+    d:DesignHeight="1080"
+    d:DesignWidth="1900"
+    prism:ViewModelLocator.AutoWireViewModel="True"
+    Background="#F4F6F9"
+    mc:Ignorable="d">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Margin="0,0,0,16"
+            Padding="16,14"
+            Background="White"
+            BorderBrush="#E5E7EB"
+            BorderThickness="1"
+            CornerRadius="8"
+            Effect="{DynamicResource EffectShadow2}">
+            <TextBlock
+                FontSize="16"
+                FontWeight="Bold"
+                Foreground="#1F2937"
+                Text="➕  新建电机型式试验" />
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Border
+                Padding="32"
+                Background="White"
+                BorderBrush="#E5E7EB"
+                BorderThickness="1"
+                CornerRadius="8"
+                Effect="{DynamicResource EffectShadow2}">
+                <StackPanel>
+
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#374151"
+                        Text="基础参数配置" />
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <hc:TextBox
+                            Grid.Column="0"
+                            Height="60"
+                            hc:InfoElement.Necessary="True"
+                            hc:InfoElement.Title="被测电机型号"
+                            FontSize="15"
+                            Text="{Binding MotorModel, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="2"
+                            Height="60"
+                            hc:InfoElement.Necessary="True"
+                            hc:InfoElement.Title="测试条码 / 出厂编号"
+                            FontSize="15"
+                            Text="{Binding MotorSerialNumber, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:DateTimePicker
+                            Grid.Column="4"
+                            Height="60"
+                            hc:InfoElement.Necessary="True"
+                            hc:InfoElement.Placeholder="请选择测试时间"
+                            hc:InfoElement.Title="试验时间"
+                            FontSize="15"
+                            SelectedDateTime="{Binding TestTime, Mode=TwoWay}"
+                            Style="{StaticResource DateTimePickerExtend}" />
+                        <hc:DateTimePicker
+                            Grid.Column="6"
+                            Height="60"
+                            hc:InfoElement.Necessary="True"
+                            hc:InfoElement.Placeholder="请选择生产时间"
+                            hc:InfoElement.Title="生产时间"
+                            FontSize="15"
+                            SelectedDateTime="{Binding ProductionTime, Mode=TwoWay}"
+                            Style="{StaticResource DateTimePickerExtend}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <hc:TextBox
+                            Grid.Column="0"
+                            Height="60"
+                            hc:InfoElement.Title="额定功率 (kW)"
+                            FontSize="15"
+                            Text="{Binding RatedPower, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="2"
+                            Height="60"
+                            hc:InfoElement.Title="额定电压 (V)"
+                            FontSize="15"
+                            Text="{Binding RatedVoltage, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="4"
+                            Height="60"
+                            hc:InfoElement.Title="额定电流 (A)"
+                            FontSize="15"
+                            Text="{Binding RatedCurrent, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="6"
+                            Height="60"
+                            hc:InfoElement.Title="额定频率 (Hz)"
+                            FontSize="15"
+                            Text="{Binding RatedFrequency, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <hc:TextBox
+                            Grid.Column="0"
+                            Height="60"
+                            hc:InfoElement.Title="额定转矩 (N·m)"
+                            FontSize="15"
+                            Text="{Binding RatedTorque, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="2"
+                            Height="60"
+                            hc:InfoElement.Title="额定转速 (r/min)"
+                            FontSize="15"
+                            Text="{Binding RatedSpeed, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="4"
+                            Height="60"
+                            hc:InfoElement.Title="标称效率 (%)"
+                            FontSize="15"
+                            Text="{Binding NominalEfficiency, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="6"
+                            Height="60"
+                            hc:InfoElement.Title="标称功率因数"
+                            FontSize="15"
+                            Text="{Binding RatedPowerFactor, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <hc:TextBox
+                            Grid.Column="0"
+                            Height="60"
+                            hc:InfoElement.Title="转动惯量 (kg·m²)"
+                            FontSize="15"
+                            Text="{Binding RotationalInertia, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:TextBox
+                            Grid.Column="2"
+                            Height="60"
+                            hc:InfoElement.Title="级数"
+                            FontSize="15"
+                            Text="{Binding Series, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:ComboBox
+                            Grid.Column="4"
+                            Height="60"
+                            hc:InfoElement.Placeholder="请选择工作制"
+                            hc:InfoElement.Title="工作制"
+                            FontSize="15"
+                            ItemsSource="{Binding WorkSystemList}"
+                            SelectedItem="{Binding WorkSystem, Mode=TwoWay}" />
+                        <hc:ComboBox
+                            Grid.Column="6"
+                            Height="60"
+                            hc:InfoElement.Placeholder="请选择连接方式"
+                            hc:InfoElement.Title="连接方式"
+                            FontSize="15"
+                            ItemsSource="{Binding ConnectionMethodList}"
+                            SelectedItem="{Binding ConnectionMethod, Mode=TwoWay}" />
+                    </Grid>
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <hc:ComboBox
+                            Grid.Column="0"
+                            Height="60"
+                            hc:InfoElement.Placeholder="请选择绝缘等级"
+                            hc:InfoElement.Title="绝缘等级"
+                            FontSize="15"
+                            ItemsSource="{Binding InsulationClassList}"
+                            SelectedItem="{Binding InsulationClass, Mode=TwoWay}" />
+                        <hc:ComboBox
+                            Grid.Column="2"
+                            Height="60"
+                            hc:InfoElement.Placeholder="请选择防护等级"
+                            hc:InfoElement.Title="防护等级"
+                            FontSize="15"
+                            ItemsSource="{Binding ProtectionLevelList}"
+                            SelectedItem="{Binding ProtectionLevel, Mode=TwoWay}" />
+                        <hc:TextBox
+                            Grid.Column="4"
+                            Height="60"
+                            hc:InfoElement.Title="温升等级"
+                            FontSize="15"
+                            Text="{Binding TemperatureRiseClass, UpdateSourceTrigger=PropertyChanged}" />
+                        <hc:ComboBox
+                            Grid.Column="6"
+                            Height="60"
+                            hc:InfoElement.Title="K1"
+                            FontSize="15"
+                            ItemsSource="{Binding K1List}"
+                            SelectedItem="{Binding K1, Mode=TwoWay}" />
+                    </Grid>
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <hc:ComboBox
+                            Grid.Column="0"
+                            Height="60"
+                            hc:InfoElement.Title="K2"
+                            FontSize="15"
+                            ItemsSource="{Binding K2List}"
+                            SelectedItem="{Binding K2, Mode=TwoWay}" />
+                    </Grid>
+                    <Border
+                        Height="1"
+                        Margin="0,8,0,24"
+                        Background="#E5E7EB" />
+
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#374151"
+                        Text="试验规范" />
+
+                    <hc:ComboBox
+                        Width="400"
+                        Height="60"
+                        Margin="0,0,0,32"
+                        HorizontalAlignment="Left"
+                        hc:InfoElement.Title="执行标准"
+                        FontSize="15"
+                        ItemsSource="{Binding StandardList}"
+                        SelectedItem="{Binding SelectedStandard}" />
+
+                    <StackPanel
+                        Margin="0,20,0,0"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <Button
+                            Width="220"
+                            Height="60"
+                            Command="{Binding StartTestCommand}"
+                            Content="保存并进入测试界面"
+                            FontSize="20"
+                            Style="{DynamicResource ButtonPrimary}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

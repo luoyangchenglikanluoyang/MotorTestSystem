@@ -1,0 +1,173 @@
+<UserControl
+    x:Class="thinger.MotorTypeTestSystem.Views.HardwareConfigView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    Background="White">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  顶部控制区  -->
+        <Grid Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="20"
+                FontWeight="Bold"
+                Text="通信诊断与硬件配置" />
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button
+                    Margin="0,0,10,0"
+                    Command="{Binding ConnectAllCommand}"
+                    Content="一键全部连接"
+                    Style="{StaticResource ButtonSuccess}" />
+                <Button
+                    Command="{Binding DisconnectAllCommand}"
+                    Content="一键全部断开"
+                    Style="{StaticResource ButtonDanger}" />
+            </StackPanel>
+        </Grid>
+
+        <!--  中间表格区 (使用 HC 的样式)  -->
+        <DataGrid
+            Grid.Row="1"
+            hc:DataGridAttach.ShowRowNumber="True"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            FontSize="14"
+            HeadersVisibility="Column"
+            ItemsSource="{Binding HardwareManager.DeviceList}"
+            RowHeight="45"
+            Style="{StaticResource DataGridBaseStyle}">
+
+            <DataGrid.Columns>
+                <!--  1. 状态指示灯 (居中)  -->
+                <DataGridTemplateColumn Width="60" Header="状态">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Ellipse
+                                Width="16"
+                                Height="16"
+                                HorizontalAlignment="Center"
+                                Stroke="Gray"
+                                StrokeThickness="1">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#F5222D" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                <Setter Property="Fill" Value="#52C41A" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  2. 基本信息  -->
+                <DataGridTextColumn
+                    Width="150"
+                    Binding="{Binding Config.DeviceName}"
+                    Header="设备名称"
+                    IsReadOnly="True" />
+                <DataGridTextColumn
+                    Width="150"
+                    Binding="{Binding Config.CommType}"
+                    Header="协议"
+                    IsReadOnly="True" />
+
+                <!--  3. 通信参数 (TextColumn，由ViewModel在后台拦截非法修改)  -->
+                <DataGridTextColumn
+                    Width="150"
+                    Binding="{Binding DisplayAddress, UpdateSourceTrigger=PropertyChanged}"
+                    Header="IP / 串口" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding DisplayPort, UpdateSourceTrigger=PropertyChanged}"
+                    Header="端口 / 波特率" />
+                <DataGridTextColumn
+                    Width="80"
+                    Binding="{Binding Config.SlaveId, UpdateSourceTrigger=PropertyChanged}"
+                    Header="从站地址" />
+
+                <!--  4. 自动连接选项  -->
+                <DataGridCheckBoxColumn
+                    Width="80"
+                    Binding="{Binding Config.AutoConnect, UpdateSourceTrigger=PropertyChanged}"
+                    Header="开机自连" />
+
+                <!--  5. 动态操作按钮  -->
+                <DataGridTemplateColumn Width="180" Header="操作">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal">
+                                <!--  连接按钮  -->
+                                <Button
+                                    Height="28"
+                                    Padding="15,0"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding ConnectCommand}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource ButtonPrimary}" TargetType="Button">
+                                            <Setter Property="Content" Value="连接" />
+                                            <Style.Triggers>
+                                                <!--  连上后隐藏  -->
+                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <!--  连接中变灰  -->
+                                                <DataTrigger Binding="{Binding IsConnecting}" Value="True">
+                                                    <Setter Property="Content" Value="连接中..." />
+                                                    <Setter Property="IsEnabled" Value="False" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!--  断开按钮  -->
+                                <Button
+                                    Height="28"
+                                    Padding="15,0"
+                                    Command="{Binding DisconnectCommand}"
+                                    Content="断开">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource ButtonDanger}" TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <!--  连上才显示  -->
+                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!--  底部保存区  -->
+        <Button
+            Grid.Row="2"
+            Width="180"
+            Height="35"
+            Margin="0,15,0,0"
+            HorizontalAlignment="Right"
+            Command="{Binding SaveConfigCommand}"
+            Content="保存参数到 JSON 文件"
+            Style="{StaticResource ButtonPrimary}" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,52 @@
+[
+  {
+    "DeviceId": "PLC_1",
+    "GroupName": "主控PLC_实时状态",
+    "FunctionCode": 3,
+    "StartAddress": 0,
+    "Length": 10,
+    "Tags": [
+      {
+        "TagName": "IO.PLC_Speed", //点位名称
+        "Offset": 0,
+        "BitIndex": null, //如果是寄存器里的bit，那么这个属性代表一个字节里的第几位
+        "ByteOrder": "BigEndian", //大小端序
+        "CustomMethod": null,//自定义解析的方法
+        "DataType": "UShort"
+      },
+      {
+        "TagName": "IO.PLC_Torque",
+        "Offset": 1,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      }
+    ]
+  },
+  {
+    "DeviceId": "Meter_1",
+    "GroupName": "功率分析仪_电参数",
+    "FunctionCode": 3,
+    "StartAddress": 0,
+    "Length": 20,
+    "Tags": [
+      {
+        "TagName": "IO.Voltage_U",
+        "Offset": 0,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "IO.Current_U",
+        "Offset": 2,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      }
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="NavButtonStyle" TargetType="Button">
+        <!--  1. 把所有按钮公用的固定属性全部挪到这里  -->
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+
+        <!--  2. 鼠标悬浮的变色触发器也放在这里  -->
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#EFF6FF" />
+                <Setter Property="Foreground" Value="#1D4ED8" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

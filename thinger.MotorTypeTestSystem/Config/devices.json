@@ -1,0 +1,46 @@
+[
+  {
+    "DeviceId": "PLC_1",
+    "DeviceName": "\u4E3B\u63A7PLC",
+    "CommType": "ModbusRTU",
+    "AutoConnect": true,
+    "IpAddress": "192.168.0.10",
+    "Port": 502,
+    "ComPort": "COM1",
+    "BaudRate": 9600,
+    "SlaveId": 1
+  },
+  {
+    "DeviceId": "Meter_1",
+    "DeviceName": "\u529F\u7387\u5206\u6790\u4EEA",
+    "CommType": "ModbusRTU",
+    "AutoConnect": true,
+    "IpAddress": "127.0.0.1",
+    "Port": 502,
+    "ComPort": "COM3",
+    "BaudRate": 9600,
+    "SlaveId": 1
+  },
+  {
+    "DeviceId": "Meter_2",
+    "DeviceName": "\u529F\u7387\u5206\u6790\u4EEA",
+    "CommType": "ModbusRTU",
+    "AutoConnect": true,
+    "IpAddress": "127.0.0.1",
+    "Port": 502,
+    "ComPort": "COM3",
+    "BaudRate": 9600,
+    "SlaveId": 2
+  },
+  {
+    "DeviceId": "Meter_3",
+    "DeviceName": "\u529F\u7387\u5206\u6790\u4EEA",
+    "CommType": "ModbusRTU",
+    "AutoConnect": true,
+    "IpAddress": "127.0.0.1",
+    "Port": 502,
+    "ComPort": "COM3",
+    "BaudRate": 9600,
+    "SlaveId": 3
+  }
+]

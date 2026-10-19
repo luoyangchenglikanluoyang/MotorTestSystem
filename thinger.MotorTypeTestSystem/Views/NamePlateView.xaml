@@ -1,0 +1,324 @@
+﻿<UserControl
+    x:Class="thinger.MotorTypeTestSystem.Views.NamePlateView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="820"
+    d:DesignWidth="1020"
+    Background="White"
+    mc:Ignorable="d">
+    <!--  VerticalScrollBarVisibility规定只能上下滚动不能左右滚动  -->
+    <ScrollViewer Padding="5" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <!--  顶部：标题与操作栏  -->
+            <Border
+                Margin="0,0,0,20"
+                Padding="24,18"
+                Background="White"
+                CornerRadius="10"
+                Effect="{StaticResource EffectShadow2}">
+                <DockPanel>
+                    <!--  左侧：带颜色指示条的标题  -->
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <Border
+                            Width="6"
+                            Height="24"
+                            Margin="0,0,12,0"
+                            Background="{DynamicResource PrimaryBrush}"
+                            CornerRadius="3" />
+                        <TextBlock
+                            FontSize="20"
+                            FontWeight="Bold"
+                            Foreground="#1E293B"
+                            Text="电机铭牌综合信息" />
+                        <Border
+                            Margin="16,0,0,0"
+                            Padding="8,4"
+                            Background="#F1F5F9"
+                            CornerRadius="4">
+                            <TextBlock
+                                FontSize="12"
+                                Foreground="#64748B"
+                                Text="在此处修改的参数将实时覆盖主表" />
+                        </Border>
+                    </StackPanel>
+
+                    <!--  右侧：保存按钮  -->
+                    <Button
+                        Height="40"
+                        Padding="24,10"
+                        HorizontalAlignment="Right"
+                        hc:BorderElement.CornerRadius="6"
+                        Command="{Binding SaveChangesCommand}"
+                        DockPanel.Dock="Right"
+                        FontSize="14"
+                        FontWeight="Bold"
+                        Style="{StaticResource ButtonPrimary}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="0,0,8,0" Text="💾" />
+                            <TextBlock Text="保存铭牌修改" />
+                        </StackPanel>
+                    </Button>
+                </DockPanel>
+            </Border>
+
+            <!--  区域 1：基本身份与状态 (高亮显示区)  -->
+            <Border
+                Margin="0,0,0,20"
+                Padding="24"
+                Background="White"
+                CornerRadius="10"
+                Effect="{StaticResource EffectShadow2}">
+                <StackPanel>
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#3B82F6"
+                        Text="名牌标识 &amp; 试验状态" />
+
+                    <UniformGrid VerticalAlignment="Top" Columns="3">
+                        <!--  带有一键清除和小水印的高级输入框  -->
+                        <hc:TextBox
+                            Margin="0,0,24,0"
+                            hc:InfoElement.Title="被测电机型号"
+                            Background="#F8FAFC"
+                            BorderThickness="0"
+                            Foreground="#64748B"
+                            IsReadOnly="True"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.MotorModel}" />
+
+                        <!--  【只读状态】沉浸式设计：背景置灰，去除边框，不可点击  -->
+                        <hc:TextBox
+                            Margin="0,0,24,0"
+                            hc:InfoElement.Title="出厂条码 (流水号)"
+                            Background="#F8FAFC"
+                            BorderThickness="0"
+                            Foreground="#64748B"
+                            IsReadOnly="True"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.Id}" />
+
+                        <hc:ComboBox
+                            Margin="0,0,24,0"
+                            hc:InfoElement.Title="当前试验状态"
+                            SelectedIndex="{Binding Motor_record.TestResultStatus}"
+                            Style="{StaticResource ComboBoxExtend}">
+                            <ComboBoxItem
+                                Content="🔄 试验进行中"
+                                FontWeight="SemiBold"
+                                Foreground="#D97706" />
+                            <ComboBoxItem
+                                Content="✅ 试验已完成"
+                                FontWeight="SemiBold"
+                                Foreground="#16A34A" />
+                            <ComboBoxItem
+                                Content="📑 已生成最终报告"
+                                FontWeight="SemiBold"
+                                Foreground="#2563EB" />
+                        </hc:ComboBox>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!--  区域 2：核心电气参数  -->
+            <Border
+                Margin="0,0,0,16"
+                Padding="24"
+                Background="White"
+                CornerRadius="10"
+                Effect="{StaticResource EffectShadow2}">
+                <StackPanel>
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#10B981"
+                        Text="核心电气额定参数" />
+
+                    <UniformGrid Columns="4">
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: kW"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="额定功率"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedPower}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: V"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="额定电压"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedVoltage}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: A"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="额定电流"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedCurrent}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: r/min"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="额定转速"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedSpeed}" />
+
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: Hz"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="额定频率"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedFrequency}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: N·m"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="额定转矩"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedTorque}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="单位: %"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="标称效率"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.NominalEfficiency}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="如: 0.85"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="功率因数"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RatedPowerFactor}" />
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+            <!--  区域 3：机械结构与设计规范  -->
+            <Border
+                Margin="0,0,0,20"
+                Padding="24"
+                Background="White"
+                CornerRadius="10"
+                Effect="{StaticResource EffectShadow2}">
+                <StackPanel>
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#8B5CF6"
+                        Text="机械结构与规范" />
+
+                    <UniformGrid Columns="4">
+                        <hc:ComboBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Title="接法"
+                            Style="{StaticResource ComboBoxExtend}"
+                            Text="{Binding Motor_record.ConnectionMethod}">
+                            <ComboBoxItem Content="星接" />
+                            <ComboBoxItem Content="三角接" />
+                        </hc:ComboBox>
+                        <hc:ComboBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Title="工作制"
+                            Style="{StaticResource ComboBoxExtend}"
+                            Text="{Binding Motor_record.WorkSystem}">
+                            <ComboBoxItem Content="S1 (连续工作制)" />
+                            <ComboBoxItem Content="S2 (短时工作制)" />
+                        </hc:ComboBox>
+                        <hc:ComboBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Title="绝缘等级"
+                            Style="{StaticResource ComboBoxExtend}"
+                            Text="{Binding Motor_record.InsulationClass}">
+                            <ComboBoxItem Content="B" />
+                            <ComboBoxItem Content="F" />
+                            <ComboBoxItem Content="H" />
+                        </hc:ComboBox>
+                        <hc:ComboBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Title="防护等级"
+                            Style="{StaticResource ComboBoxExtend}"
+                            Text="{Binding Motor_record.ProtectionLevel}">
+                            <ComboBoxItem Content="IP44" />
+                            <ComboBoxItem Content="IP54" />
+                            <ComboBoxItem Content="IP55" />
+                        </hc:ComboBox>
+
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="极数 (2p)"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.Series}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.Placeholder="kg·m²"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="转动惯量"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.RotationalInertia}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="折算 K1"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.K1}" />
+                        <hc:TextBox
+                            Margin="0,0,24,10"
+                            hc:InfoElement.ShowClearButton="True"
+                            hc:InfoElement.Title="折算 K2"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Motor_record.K2}" />
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!--  区域 4：试验元数据  -->
+            <Border
+                Margin="0,0,0,20"
+                Padding="24"
+                Background="White"
+                CornerRadius="10"
+                Effect="{StaticResource EffectShadow2}">
+                <StackPanel>
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#F59E0B"
+                        Text="执行标准与建档时间" />
+
+                    <UniformGrid Columns="3">
+                        <hc:DatePicker
+                            Margin="0,0,24,0"
+                            hc:InfoElement.Title="试验创建时间"
+                            SelectedDate="{Binding Motor_record.TestTime}"
+                            Style="{StaticResource DatePickerExtend}" />
+                        <hc:DatePicker
+                            Margin="0,0,24,0"
+                            hc:InfoElement.Title="电机生产时间"
+                            SelectedDate="{Binding Motor_record.ProductionTime}"
+                            Style="{StaticResource DatePickerExtend}" />
+                        <hc:ComboBox
+                            Margin="0,0,24,0"
+                            hc:InfoElement.Title="试验执行标准"
+                            Style="{StaticResource ComboBoxExtend}"
+                            Text="{Binding Motor_record.SelectedStandard}">
+                            <ComboBoxItem Content="GB/T 1032-2012 三相异步电动机试验方法" />
+                            <ComboBoxItem Content="GB/T 1029-2005 三相同步电机试验方法" />
+                            <ComboBoxItem Content="IEC 60034-2-1:2014 旋转电机试验方法" />
+                        </hc:ComboBox>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

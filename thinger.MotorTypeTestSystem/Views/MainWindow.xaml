@@ -1,0 +1,366 @@
+<Window
+    x:Class="thinger.MotorTypeTestSystem.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:prism="http://prismlibrary.com/"
+    Title="电机型式试验测控系统 - Motor Type Test System"
+    Width="1360"
+    Height="820"
+    MinWidth="1100"
+    MinHeight="720"
+    Background="#F3F4F6"
+    WindowStartupLocation="CenterScreen"
+    WindowState="Maximized"
+    mc:Ignorable="d">
+
+    <!--
+        用 WindowChrome 接管原生的标题栏，保留了原生的边缘拖拽改变大小、阴影等特性
+        CaptionHeight是标题栏区域的高度
+        CornerRadius是标题栏的圆角
+        GlassFrameThickness是边框厚度
+        UseAeroCaptionButtons这个属性为是否使用系统自带的标题栏按钮
+        这段代码告诉 WPF：
+        “我要自己画标题栏，标题栏高度 56 像素，不要系统按钮，但保留一点系统边框效果。”
+    -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="56"
+            CornerRadius="0"
+            GlassFrameThickness="1"
+            UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  ================= 顶部系统通用 Header =================  -->
+        <Border
+            Grid.Row="0"
+            Padding="10,0"
+            Background="#1E293B">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!--  1. 左上角的隐藏式导航菜单 (汉堡按钮)  -->
+                <ToggleButton
+                    x:Name="MenuToggleButton"
+                    Grid.Column="0"
+                    Width="48"
+                    Height="44"
+                    Margin="0,0,12,0"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    WindowChrome.IsHitTestVisibleInChrome="True">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Foreground="White"
+                        Text="&#xE700;" />
+                </ToggleButton>
+
+                <!--
+                    点击汉堡按钮弹出的悬浮菜单
+                    1.IsChecked是ToggleButton（MenuToggleButton）的属性。
+                    2.ElementName是 WPF 数据绑定里的寻找绑定源——它告诉绑定引擎：“别去 ViewModel 里找，
+                    去界面上找一个叫这个名字的控件，把它的属性作为绑定源。”
+                    3.{Binding IsChecked, RelativeSource={RelativeSource Self}}这是控件绑定自己的另一个属性
+                    4.PlacementTarget是摆放方位是“底部”。PlacementTarget="{Binding ElementName=MenuToggleButton}"就是摆放在MenuToggleButton这个按钮的底部
+                    5.StaysOpen="False"的意思是点击这个菜单框外的地方，这个菜单自动就收回
+                -->
+
+                <Popup
+                    AllowsTransparency="True"
+                    IsOpen="{Binding IsChecked, ElementName=MenuToggleButton}"
+                    Placement="Bottom"
+                    PlacementTarget="{Binding ElementName=MenuToggleButton}"
+                    StaysOpen="False">
+                    <Border
+                        Width="200"
+                        Margin="0,8,0,0"
+                        Padding="8"
+                        Background="White"
+                        BorderBrush="#E2E8F0"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <!--
+                            1.Border.Effect是给这个 Border 设置“视觉效果”属性
+                            2.DropShadowEffect是一种具体的效果：投影/阴影
+                            3.BlurRadius是阴影的模糊程度
+                            4.Opacity是阴影的透明度
+                            5.ShadowDepth是阴影偏移的距离
+                        -->
+                        <Border.Effect>
+                            <DropShadowEffect
+                                BlurRadius="12"
+                                Opacity="0.15"
+                                ShadowDepth="4" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <!--
+                                导航 1：创建测试
+                                1.CommandParameter="CreateTestView"会将这个CreateTestView作为参数传递给
+                                Command="{Binding NavigateCommand}"绑定的方法。
+                                2.Cursor="Hand"这个的作用是鼠标移动到按钮上会变成小手👆。
+                                3.FontWeight="SemiBold"是设置字体的粗细程度，意思是让文字显示为半粗体。
+                            -->
+                            <Button
+                                Height="44"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Left"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding NavigateCommand}"
+                                CommandParameter="CreateTestView"
+                                Content="➕ 创建测试"
+                                Cursor="Hand"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Style="{StaticResource NavButtonStyle}" />
+
+                            <!--  导航 2：历史查询  -->
+                            <Button
+                                Height="44"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Left"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding NavigateCommand}"
+                                CommandParameter="HistoryQueryView"
+                                Content="📁 历史查询"
+                                Cursor="Hand"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Style="{StaticResource NavButtonStyle}" />
+
+                            <!--  导航 3：硬件配置  -->
+                            <Button
+                                Height="44"
+                                Padding="16,0"
+                                HorizontalContentAlignment="Left"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding NavigateCommand}"
+                                CommandParameter="HardwareConfigView"
+                                Content="⚙️ 硬件配置"
+                                Cursor="Hand"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Style="{StaticResource NavButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
+                <!--  2. 系统 Logo 与名称  -->
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="电机型式试验测控系统" />
+                        <TextBlock
+                            Margin="0,1,0,0"
+                            FontSize="9"
+                            Foreground="#94A3B8"
+                            Text="MOTOR TYPE-TEST CONTROL &amp; REPORT SYSTEM" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  3. 右上角：自定义窗口控制按钮（最小化、最大化、关闭）  -->
+                <StackPanel
+                    Grid.Column="3"
+                    Margin="0,-5,0,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    WindowChrome.IsHitTestVisibleInChrome="True">
+                    <!--  IsHitTestVisibleInChrome="True" 是告诉 WindowChrome，这个区域可以被鼠标点击，而不是拖拽窗口  -->
+
+                    <Button
+                        Width="46"
+                        Height="32"
+                        Click="BtnMinimize_Click"
+                        Content="&#xE921;"
+                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                        FontSize="14"
+                        Foreground="White">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <!--  Template（重写控件模板）  -->
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <!--<ContentPresenter> 是模板里的“内容展示位”，负责把按钮的 Content（你写的图标或文字）显示出来。-->
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#334155" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button
+                        x:Name="BtnMaximize"
+                        Width="46"
+                        Height="32"
+                        Click="BtnMaximize_Click"
+                        Content="&#xE922;"
+                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                        FontSize="14"
+                        Foreground="White">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#334155" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button
+                        Width="46"
+                        Height="32"
+                        Click="BtnClose_Click"
+                        Content="&#xE8BB;"
+                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                        FontSize="14"
+                        Foreground="White">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E81123" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!--  ================= 主体区域：多标签页(TabControl) =================  -->
+        <Grid Grid.Row="1">
+            <!--  TabControl，并给标签页定制了带 × 号的样式  -->
+            <TabControl
+                Margin="4,4,4,0"
+                prism:RegionManager.RegionName="MainRegion"
+                Background="White"
+                BorderThickness="0">
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="TabItem">
+                        <!--  动态获取内部页面的 DataContext.Title 作为标签页的标题  -->
+                        <Setter Property="Header" Value="{Binding DataContext.Title}" />
+                        <Setter Property="Padding" Value="10,6" />
+                        <Setter Property="Background" Value="#F1F5F9" />
+                        <Setter Property="BorderThickness" Value="1,1,1,0" />
+                        <Setter Property="BorderBrush" Value="#E2E8F0" />
+
+                        <!--  自定义标签页模板：文字 + 小红叉 HeaderTemplate是标签页头部（Header）区域的整体布局和数据展示方式。  -->
+                        <Setter Property="HeaderTemplate">
+                            <Setter.Value>
+                                <!--  固定模板修改样式  -->
+                                <DataTemplate>
+                                    <!--  固定模板修改样式  -->
+                                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                        <TextBlock
+                                            Margin="0,0,8,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            FontWeight="Medium"
+                                            Text="{Binding}" />
+                                        <!--  小叉号按钮  -->
+                                        <Button
+                                            Width="24"
+                                            Height="24"
+                                            Padding="0,0,0,2"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Click="CloseTab_Click"
+                                            Content="×"
+                                            Cursor="Hand"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Foreground="#94A3B8"
+                                            ToolTip="关闭页面">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Foreground" Value="Red" />
+                                                            <Setter Property="Background" Value="#FEE2E2" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.ItemContainerStyle>
+            </TabControl>
+
+            <!--  浮动提示容器 (如保存成功提醒等)  -->
+            <ScrollViewer
+                Margin="0,16,16,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                VerticalScrollBarVisibility="Hidden">
+                <StackPanel VerticalAlignment="Top" hc:Growl.GrowlParent="True" />
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
