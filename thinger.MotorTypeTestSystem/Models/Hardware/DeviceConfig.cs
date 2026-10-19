@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace thinger.MotorTypeTestSystem.Models.Hardware
 {
     /// <summary>
-    /// 设备通讯类型枚举
+    /// 设备通讯类型枚举，此类型主要用于设备的连接和断开
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))] //此为attribute特性 将枚举保存为字符串，方便人阅读（让枚举（Enum）在转成 JSON 数据时，以“字符串名称”呈现，而不是默认的“数字”。）
     public enum CommunicationType

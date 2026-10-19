@@ -1,0 +1,63 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol">
+    <Style x:Key="UnderlineTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,1.5" />
+        <Setter Property="BorderBrush" Value="#CBD5E1" />
+        <!--  默认雅致浅灰底线  -->
+        <Setter Property="Foreground" Value="#0F172A" />
+        <!--  纯黑/深石板黑字体  -->
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="4,6,4,6" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="CaretBrush" Value="#0F172A" />
+        <!--  闪烁光标颜色  -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border
+                        x:Name="border"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        SnapsToDevicePixels="True">
+                        <ScrollViewer
+                            x:Name="PART_ContentHost"
+                            Focusable="false"
+                            HorizontalScrollBarVisibility="Hidden"
+                            VerticalScrollBarVisibility="Hidden" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!--  鼠标移上去：底线变为中灰色  -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#64748B" />
+                        </Trigger>
+                        <!--  鼠标点击获得焦点：底线加粗，变为高级深黑灰  -->
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#0F172A" />
+                            <Setter TargetName="border" Property="BorderThickness" Value="0,0,0,2.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!--  采入按钮统一样式：质感灰底白字/悬浮变深  -->
+    <Style
+        x:Key="SampleBtnStyle"
+        BasedOn="{StaticResource ButtonDefault}"
+        TargetType="Button">
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Background" Value="#F1F5F9" />
+        <Setter Property="Foreground" Value="#334155" />
+        <Setter Property="BorderBrush" Value="#CBD5E1" />
+        <Setter Property="hc:BorderElement.CornerRadius" Value="6" />
+    </Style>
+</ResourceDictionary>

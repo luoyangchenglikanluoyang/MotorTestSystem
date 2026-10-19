@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace thinger.MotorTypeTestSystem.Models
 {
     /// <summary>
-    /// 型式试验总任务记录表（主表）
+    /// 型式试验电机信息表（主表）
     /// 对应一台被测电机在某次试验中的建档与基本铭牌参数
     /// </summary>
     public class MotorTestRecord

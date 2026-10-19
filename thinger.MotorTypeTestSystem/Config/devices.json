@@ -42,5 +42,16 @@
     "ComPort": "COM3",
     "BaudRate": 9600,
     "SlaveId": 3
+  },
+  {
+    "DeviceId": "直流电阻仪",
+    "DeviceName": "直流电阻电桥",
+    "CommType": "ModbusRTU",
+    "AutoConnect": true,
+    "IpAddress": "127.0.0.1",
+    "Port": 502,
+    "ComPort": "COM2",
+    "BaudRate": 9600,
+    "SlaveId": 1
   }
 ]

@@ -22,7 +22,7 @@ namespace thinger.MotorTypeTestSystem.Services
                 }
             },
             {
-                "算法B_奇葩拼接提取中间位", (rawData, offset) =>
+                "算法B_拼接提取中间位", (rawData, offset) =>
                 {
                     // 假设某个厂家，要求拿第一个寄存器的高 8 位，和第二个寄存器的低 8 位拼起来
                     ushort word1 = rawData[offset];
@@ -33,10 +33,20 @@ namespace thinger.MotorTypeTestSystem.Services
 
                     // 拼成一个特殊的值
                     int specialValue = (highByte << 8) | lowByte;
-                    
+
                     return (float)specialValue;
                 }
-            }
+            },
+            {
+                "电桥_毫欧转欧姆", (rawData, offset) =>
+                {
+                    // rawData 就是从电桥读上来的 ushort[] 寄存器数组
+                    // 假设两个寄存器拼成一个 32位 整数 (毫欧)
+                    int milliOhm = (rawData[offset] << 16) | rawData[offset + 1];
+                    // 毫欧除以 1000 变成欧姆(Ω)返回
+                    return (double)milliOhm / 1000.0;
+             }
+    }
         };
     }
 }
