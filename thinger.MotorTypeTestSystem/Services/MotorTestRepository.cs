@@ -162,6 +162,51 @@ namespace thinger.MotorTypeTestSystem.Services
             }
         }
 
-        
+        /// <summary>
+        /// 查询电机试验历史记录（按时间倒序）
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<List<MotorTestRecord>> QueryTestRecordsAsync(string? keyword = null)
+        {
+            try
+            {
+                string sql = "SELECT * FROM motor_test_record WHERE 1=1 ";//"WHERE 1=1 " 后面一定要加个空格。不然你拼出来的 SQL 可能会变成 WHERE 1=1AND motor_model='xxx'，这就会导致数据库报错。
+
+                // 如果输入了搜索关键词，支持按出厂编号(MotorSerialNumber) 或 电机型号(MotorModel) 模糊查询
+                if (!string.IsNullOrWhiteSpace(keyword))
+                {
+                    sql += " AND (MotorSerialNumber LIKE @Kw OR MotorModel LIKE @Kw) ";
+                }
+                sql += " ORDER BY TestTime DESC LIMIT 100;"; // 默认取最近 100 条
+                var list = await _dbService.QueryAsync<MotorTestRecord>(sql, new { Kw = $"%{keyword?.Trim()}%" });
+                return list.ToList();
+            }
+            catch (Exception ex)
+            {
+                _Logger.Error(ex, "查询电机试验历史记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 根据流水号 Id 删除历史测试主记录及其关联的子试验记录
+        /// </summary>
+        public async Task<bool> DeleteTestRecordAsync(string id)
+        {
+            try
+            {
+                //主表给其他子表加了外键设置了 ON DELETE CASCADE，主表一删，MySQL 底层会自动瞬间清空所有子表
+                string sql = "DELETE FROM motor_test_record WHERE Id = @Id;";
+                int rows = await _dbService.ExecuteAsync(sql, new { Id = id });
+                return rows > 0;
+            }
+            catch (Exception ex)
+            {
+                _Logger.Error(ex, $"删除测试记录 [{id}] 失败");
+                throw;
+            }
+        }
     }
 }
