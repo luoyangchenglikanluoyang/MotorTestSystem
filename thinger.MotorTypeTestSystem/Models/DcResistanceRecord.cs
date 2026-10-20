@@ -66,13 +66,13 @@ namespace thinger.MotorTypeTestSystem.Models
 
         // 允许的不平衡度上限阈值（默认给国标的 2.0%）
         [ObservableProperty]
-        private double _maxAllowedUnbalance = 2.0;
+        private double _maxAllowedUnbalance = 1.0;
 
         /// <summary>
         /// 判定结果是否合格 (比如不平衡度 ≤ 2% 为合格)
         /// </summary>
         [ObservableProperty]
-        private bool _isQualified = true;
+        private bool? _isQualified = null;
 
         /// <summary>
         /// 保存时间

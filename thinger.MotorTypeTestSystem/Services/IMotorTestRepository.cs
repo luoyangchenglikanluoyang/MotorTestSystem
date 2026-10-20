@@ -18,6 +18,10 @@ namespace thinger.MotorTypeTestSystem.Services
         // 2.更改电机名牌信息保存到数据库
         Task<bool> UpdateTestRecordAsync(MotorTestRecord record);
 
+        // 3. 历史记录查询：支持按条码/型号模糊搜索，按测试时间倒序排列
+        Task<List<MotorTestRecord>> QueryTestRecordsAsync(string? keyword = null);
+        // 4. 删除某条测试记录（方便清理调试垃圾数据）
+        Task<bool> DeleteTestRecordAsync(string id);
 
         // 1. 保存/更新直流电阻数据
         Task<bool> SaveDcResistanceAsync(DcResistanceRecord record);

@@ -92,7 +92,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             // 2. 计算三相不平衡度 = (最大值 - 最小值) / 平均值 * 100%
             double max = Math.Max(DcRecord.Ruv, Math.Max(DcRecord.Rvw, DcRecord.Rwu));
             double min = Math.Min(DcRecord.Ruv, Math.Min(DcRecord.Rvw, DcRecord.Rwu));
-            DcRecord.UnbalanceRate = Math.Round(((max - min) / avg) * 100.0, 3); // 保留 3 位百分比
+            DcRecord.UnbalanceRate = Math.Round(((max - min) / min) * 100.0, 3); // 保留 3 位百分比
             // 3. 折算至 20℃ 时的标准基准电阻：
             // 国标公式：R_20 = R_avg * (K1 + 20) / (K1 + T_实测)
             // 绝大部分电机是铜线(K1=235)，铝线(K1=225)。直接读取铭牌里存的 K1！

@@ -5,6 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Views"
              xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:prism="http://prismlibrary.com/"
+             prism:ViewModelLocator.AutoWireViewModel="True"
              mc:Ignorable="d" 
              Background="White"
              d:DesignHeight="850" d:DesignWidth="1100">
@@ -75,6 +77,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
+                                         HorizontalContentAlignment="Center"
                                      Text="{Binding DcRecord.Ruv, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource UnderlineTextBoxStyle}"/>
                                 <Button Grid.Column="2" Content="📥 采入 U-V" 
@@ -91,6 +94,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
+                                         HorizontalContentAlignment="Center"
                                      Text="{Binding DcRecord.Rvw, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource UnderlineTextBoxStyle}"/>
                                 <Button Grid.Column="2" Content="📥 采入 V-W" 
@@ -107,6 +111,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
+                                         HorizontalContentAlignment="Center"
                                      Text="{Binding DcRecord.Rwu, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource UnderlineTextBoxStyle}"/>
                                 <Button Grid.Column="2" Content="📥 采入 W-U" 
@@ -125,16 +130,96 @@
                                 <!-- 环境/绕组温度 -->
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="测量时绕组/室温 (℃)" FontSize="13" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,6"/>
-                                    <TextBox Text="{Binding DcRecord.WindingTemp, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox 
+                                        HorizontalContentAlignment="Center"
+                                        Text="{Binding DcRecord.WindingTemp, UpdateSourceTrigger=PropertyChanged}" 
                                          Style="{StaticResource UnderlineTextBoxStyle}"/>
                                 </StackPanel>
                                 <!-- 允许上限 -->
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="不平衡度允许上限 (%)" FontSize="13" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,6"/>
-                                    <TextBox Text="{Binding DcRecord.MaxAllowedUnbalance, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox 
+                                        HorizontalContentAlignment="Center"
+                                        Text="{Binding DcRecord.MaxAllowedUnbalance, UpdateSourceTrigger=PropertyChanged}" 
                                          Style="{StaticResource UnderlineTextBoxStyle}"/>
                                 </StackPanel>
                             </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  右侧卡片：计算结果与合格判定看板                           -->
+                    <Border Grid.Column="2" Background="White" CornerRadius="10" Padding="24" Effect="{StaticResource EffectShadow2}">
+                        <StackPanel>
+                            <TextBlock Text="📊 试验换算结果与判定"  FontSize="20" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,30"/>
+                            <!-- 结果展示小卡片 1：三相平均线电阻 -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16,12" Margin="0,0,0,12">
+                                <DockPanel>
+                                    <TextBlock Text="三相平均电阻 R_avg" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding DcRecord.AverageResistance, StringFormat={}{0:F5} Ω}" 
+                                           HorizontalAlignment="Right" FontSize="20" FontWeight="Bold" Foreground="#0F172A"/>
+                                </DockPanel>
+                            </Border>
+
+                            <!-- 结果展示小卡片 2：三相电阻不平衡度 -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16,12" Margin="0,0,0,12">
+                                <DockPanel>
+                                    <TextBlock Text="三相电阻不平衡度 ΔR" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding DcRecord.UnbalanceRate, StringFormat={}{0:F3} %}" 
+                                           HorizontalAlignment="Right" FontSize="20" FontWeight="Bold" Foreground="#0F172A"/>
+                                </DockPanel>
+                            </Border>
+                            <!-- 结果展示小卡片 3：折算至 20℃ 基准电阻 -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+                                <DockPanel>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="折算至 20℃ 电阻 R_20" FontSize="13" Foreground="#64748B"/>
+                                        <TextBlock Text="(基准材质常数 K1 = 235)" FontSize="10" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding DcRecord.ResistanceAt20C, StringFormat={}{0:F5} Ω}" 
+                                           HorizontalAlignment="Right" FontSize="20" FontWeight="Bold" Foreground="#0F172A"/>
+                                </DockPanel>
+                            </Border>
+
+                            <!-- 结论判定徽章：绿色代表合格，红色代表不合格 -->
+                            <Border CornerRadius="8" Padding="20,16" Margin="0,10,0,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="White"/>
+                                        <!-- 默认浅红 -->
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DcRecord.IsQualified}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                <!-- 浅绿 -->
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DcRecord.IsQualified}" Value="false">
+                                                <Setter Property="Background" Value="#FEE2E2"/>
+                                                <!-- 浅绿 -->
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock FontSize="13" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value=""/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DcRecord.IsQualified}" Value="True">
+                                                        <Setter Property="Text" Value="判定结论：合格"/>
+                                                        <Setter Property="Foreground" Value="#166534"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding DcRecord.IsQualified}" Value="false">
+                                                        <Setter Property="Text" Value="判定结论：不合格"/>
+                                                        <Setter Property="Foreground" Value="#991B1B"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="依据：三相电阻不平衡度 ≤ 允许上限" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
 
                         </StackPanel>
                     </Border>

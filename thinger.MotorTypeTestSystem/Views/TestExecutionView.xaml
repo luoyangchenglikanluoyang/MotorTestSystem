@@ -162,7 +162,7 @@
                         Tag="📋" />
                     <RadioButton
                         Command="{Binding SwitchSubViewCommand}"
-                        CommandParameter="Nameplate"
+                        CommandParameter="DcResistance"
                         Content="直流电阻"
                         Style="{StaticResource SubNavBtnStyle}"
                         Tag="🔧" />

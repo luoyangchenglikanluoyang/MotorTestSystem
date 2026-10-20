@@ -72,7 +72,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                 {
                     // 这里根据后续新建的 UserControl 名字一一对应即可
                     "Nameplate" => _containerProvider.Resolve<NamePlateView>(),
-                    //"DcResistance" => _containerProvider.Resolve<DcResistanceView>(),
+                    "DcResistance" => _containerProvider.Resolve<DcResistanceView>(),
                     // "NoLoad"       => _containerProvider.Resolve<NoLoadTestView>(),
                     _ => null
                 };
@@ -138,7 +138,8 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             // 当整个“试验中心”标签页被关闭时，顺手把所有缓存的子试验也清理掉
             foreach (var view in _subViewCache.Values)
             {
-                if (view.DataContext is IDestructible destructibleSubVm)
+                // 关键防呆：必须确保不是自己 (view.DataContext != this)，防止递归死循环！
+                if (view.DataContext != null && view.DataContext != this && view.DataContext is IDestructible destructibleSubVm)
                 {
                     destructibleSubVm.Destroy();
                 }

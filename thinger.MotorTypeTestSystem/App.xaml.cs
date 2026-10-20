@@ -101,6 +101,7 @@ namespace thinger.MotorTypeTestSystem
             containerRegistry.RegisterForNavigation<CreateTestView, CreateTestViewModel>();
             containerRegistry.RegisterForNavigation<TestExecutionView, TestExecutionViewModel>();
             containerRegistry.RegisterForNavigation<NamePlateView, NamePlateViewModel>();
+            containerRegistry.RegisterForNavigation<DcResistanceView, DcResistanceViewModel>();
         }
 
         protected override Window CreateShell()
