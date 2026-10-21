@@ -4,12 +4,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
-    xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Views"    
+    xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
-    prism:ViewModelLocator.AutoWireViewModel="True"
     d:DesignHeight="820"
     d:DesignWidth="1020"
+    prism:ViewModelLocator.AutoWireViewModel="True"
     Background="White"
     mc:Ignorable="d">
     <!--  VerticalScrollBarVisibility规定只能上下滚动不能左右滚动  -->

@@ -43,6 +43,33 @@
             ItemsSource="{Binding HardwareManager.DeviceList}"
             RowHeight="45"
             Style="{StaticResource DataGridBaseStyle}">
+            <!--  彻底覆盖系统级高亮画刷  -->
+            <DataGrid.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#E2E8F0" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#0F172A" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#F1F5F9" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#0F172A" />
+            </DataGrid.Resources>
+            <DataGrid.RowStyle>
+                <Style BasedOn="{StaticResource DataGridRowStyle}" TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#E2E8F0" />
+                            <Setter Property="Foreground" Value="#0F172A" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.CellStyle>
+                <Style BasedOn="{StaticResource DataGridCellStyle}" TargetType="DataGridCell">
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#E2E8F0" />
+                            <Setter Property="Foreground" Value="#0F172A" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.CellStyle>
 
             <DataGrid.Columns>
                 <!--  1. 状态指示灯 (居中)  -->

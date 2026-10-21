@@ -237,7 +237,7 @@
 
             <!--  2. 右侧实时数据信息栏主体  -->
             <Border
-                Width="380"
+                Width="450"
                 Background="White"
                 CornerRadius="8"
                 Effect="{StaticResource EffectShadow2}"
@@ -274,26 +274,40 @@
                                 <Border Style="{StaticResource RealtimeCardStyle}">
                                     <StackPanel>
                                         <TextBlock
-                                            FontSize="11"
-                                            Foreground="#94A3B8"
+                                            FontSize="18"
+                                            Foreground="Yellow"
                                             Text="Uab 电压 (V)" />
                                         <TextBlock
                                             Margin="0,2,0,0"
-                                            FontSize="19"
+                                            FontSize="25"
                                             FontWeight="Bold"
-                                            Foreground="#38BDF8"
+                                            Foreground="Yellow"
                                             Text="0.00" />
                                     </StackPanel>
                                 </Border>
                                 <Border Style="{StaticResource RealtimeCardStyle}">
                                     <StackPanel>
                                         <TextBlock
-                                            FontSize="11"
-                                            Foreground="#94A3B8"
+                                            FontSize="18"
+                                            Foreground="Yellow"
                                             Text="Ia 电流 (A)" />
                                         <TextBlock
                                             Margin="0,2,0,0"
-                                            FontSize="19"
+                                            FontSize="25"
+                                            FontWeight="Bold"
+                                            Foreground="Yellow"
+                                            Text="0.00" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource RealtimeCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock
+                                            FontSize="18"
+                                            Foreground="#4ADE80"
+                                            Text="Ubc 电压 (V)" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            FontSize="25"
                                             FontWeight="Bold"
                                             Foreground="#4ADE80"
                                             Text="0.00" />
@@ -302,26 +316,12 @@
                                 <Border Style="{StaticResource RealtimeCardStyle}">
                                     <StackPanel>
                                         <TextBlock
-                                            FontSize="11"
-                                            Foreground="#94A3B8"
-                                            Text="Ubc 电压 (V)" />
-                                        <TextBlock
-                                            Margin="0,2,0,0"
-                                            FontSize="19"
-                                            FontWeight="Bold"
-                                            Foreground="#38BDF8"
-                                            Text="0.00" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Style="{StaticResource RealtimeCardStyle}">
-                                    <StackPanel>
-                                        <TextBlock
-                                            FontSize="11"
-                                            Foreground="#94A3B8"
+                                            FontSize="18"
+                                            Foreground="#4ADE80"
                                             Text="Ib 电流 (A)" />
                                         <TextBlock
                                             Margin="0,2,0,0"
-                                            FontSize="19"
+                                            FontSize="25"
                                             FontWeight="Bold"
                                             Foreground="#4ADE80"
                                             Text="0.00" />
