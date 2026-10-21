@@ -1,0 +1,300 @@
+<Window
+    x:Class="thinger.MotorTypeTestSystem.Views.Dialogs.TempChannelConfigWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="测温通道配置"
+    Width="780"
+    Height="600"
+    AllowsTransparency="True"
+    Background="Transparent"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterOwner"
+    WindowStyle="None"
+    mc:Ignorable="d">
+
+    <!--  外层卡片与阴影边框  -->
+    <Border
+        Margin="12"
+        Background="White"
+        BorderBrush="#CBD5E1"
+        BorderThickness="1"
+        CornerRadius="10"
+        Effect="{StaticResource EffectShadow2}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <!--  顶部标题栏  -->
+                <RowDefinition Height="Auto" />
+                <!--  提示信息栏  -->
+                <RowDefinition Height="*" />
+                <!--  主体表格区域  -->
+                <RowDefinition Height="Auto" />
+                <!--  底部操作按钮栏  -->
+            </Grid.RowDefinitions>
+
+            <!--  =========================================================================  -->
+            <!--  1. 顶部标题栏（支持鼠标拖动移动窗口）  -->
+            <!--  =========================================================================  -->
+            <Border
+                Grid.Row="0"
+                Padding="20,14"
+                Background="#F8FAFC"
+                BorderBrush="#E2E8F0"
+                BorderThickness="0,0,0,1"
+                CornerRadius="9,9,0,0"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <DockPanel>
+                    <!--  关闭按钮 [✕]  -->
+                    <Button
+                        Width="32"
+                        Height="32"
+                        hc:BorderElement.CornerRadius="6"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="BtnCancel_Click"
+                        Cursor="Hand"
+                        DockPanel.Dock="Right"
+                        FontSize="14"
+                        Foreground="#64748B">
+                        <TextBlock Text="✕" />
+                    </Button>
+
+                    <!--  标题与图标  -->
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <Border
+                            Width="4"
+                            Height="20"
+                            Margin="0,0,10,0"
+                            Background="#3B82F6"
+                            CornerRadius="2" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="17"
+                            FontWeight="Bold"
+                            Foreground="#0F172A"
+                            Text="⚙ 巡检仪测温通道与测点设置" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!--  =========================================================================  -->
+            <!--  2. 提示信息说明栏  -->
+            <!--  =========================================================================  -->
+            <Border
+                Grid.Row="1"
+                Margin="18,12,18,6"
+                Padding="12,8"
+                Background="#F0FDF4"
+                BorderBrush="#BBF7D0"
+                BorderThickness="1"
+                CornerRadius="6">
+                <DockPanel>
+                    <TextBlock
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        FontSize="15"
+                        Text="💡" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="#166534"
+                        Text="使用说明：勾选【启用】的通道才会实时采集并在图表中画线。若探头挪动了位置，直接在【测点名称】中修改别名即可，无需调换物理接线。"
+                        TextWrapping="Wrap" />
+                </DockPanel>
+            </Border>
+
+            <!--  =========================================================================  -->
+            <!--  3. 主体通道配置表格 (DataGrid)  -->
+            <!--  =========================================================================  -->
+            <DataGrid
+                Grid.Row="2"
+                Margin="18,8,18,12"
+                AutoGenerateColumns="False"
+                Background="White"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                CanUserResizeRows="False"
+                CanUserSortColumns="False"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
+                HorizontalGridLinesBrush="#F1F5F9"
+                ItemsSource="{Binding Channels}"
+                RowHeight="44">
+                <DataGrid.Resources>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#E2E8F0" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#0F172A" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#F1F5F9" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#0F172A" />
+                </DataGrid.Resources>
+                <DataGrid.RowStyle>
+                    <Style BasedOn="{StaticResource DataGridRowStyle}" TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <!--  核心：当这一行被选中时，强制背景变为质感浅灰  -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E2E8F0" />
+                                <Setter Property="Foreground" Value="#0F172A" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <DataGrid.CellStyle>
+                    <Style BasedOn="{StaticResource DataGridCellStyle}" TargetType="DataGridCell">
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E2E8F0" />
+                                <Setter Property="Foreground" Value="#0F172A" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+                <DataGrid.Columns>
+                    <!--  列1：启用勾选  -->
+                    <DataGridTemplateColumn Width="70" Header="启用">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!--  列2：物理通道显示（只读）  -->
+                    <DataGridTextColumn
+                        Width="90"
+                        Binding="{Binding ChannelDisplay}"
+                        FontWeight="SemiBold"
+                        Foreground="#334155"
+                        Header="物理端子"
+                        IsReadOnly="True" />
+
+                    <!--  列3：底层硬件Tag名（只读）  -->
+                    <DataGridTextColumn
+                        Width="105"
+                        Binding="{Binding TagName}"
+                        Foreground="#64748B"
+                        Header="点表 Tag"
+                        IsReadOnly="True" />
+
+                    <!--  列4：测点别名 (允许用户自由编辑)  -->
+                    <DataGridTemplateColumn Width="*" Header="测点名称 (可直接打字修改)">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox
+                                    Margin="2"
+                                    Padding="8,4"
+                                    VerticalAlignment="Center"
+                                    hc:BorderElement.CornerRadius="4"
+                                    BorderBrush="#CBD5E1"
+                                    FontSize="13"
+                                    FontWeight="Medium"
+                                    Foreground="#0F172A"
+                                    Text="{Binding PointName, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!--  列5：测点类型 (下拉选择)  -->
+                    <DataGridTemplateColumn Width="135" Header="测点类型">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox
+                                    Margin="2"
+                                    VerticalAlignment="Center"
+                                    hc:BorderElement.CornerRadius="4"
+                                    FontSize="12"
+                                    SelectedValue="{Binding PointType, UpdateSourceTrigger=PropertyChanged}"
+                                    SelectedValuePath="Content">
+                                    <ComboBoxItem Content="环境基准" />
+                                    <ComboBoxItem Content="机壳表面" />
+                                    <ComboBoxItem Content="轴承测点" />
+                                    <ComboBoxItem Content="内部绕组" />
+                                    <ComboBoxItem Content="冷却介质" />
+                                    <ComboBoxItem Content="常规测点" />
+                                </ComboBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!--  列6：是否为环境温度基准  -->
+                    <DataGridTemplateColumn Width="95" Header="环境基准">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding IsAmbient, UpdateSourceTrigger=PropertyChanged}"
+                                    ToolTip="勾选作为计算温升的环境参考基准温度" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!--  =========================================================================  -->
+            <!--  4. 底部操作按钮栏  -->
+            <!--  =========================================================================  -->
+            <Border
+                Grid.Row="3"
+                Padding="18,12"
+                Background="#F8FAFC"
+                BorderBrush="#E2E8F0"
+                BorderThickness="0,1,0,0"
+                CornerRadius="0,0,9,9">
+                <DockPanel>
+                    <!--  左侧：恢复默认按钮  -->
+                    <Button
+                        Height="36"
+                        Padding="14,0"
+                        hc:BorderElement.CornerRadius="6"
+                        Background="#F1F5F9"
+                        BorderThickness="0"
+                        Click="BtnResetDefault_Click"
+                        Content="↺ 恢复默认通道设置"
+                        Cursor="Hand"
+                        FontSize="13"
+                        Foreground="#475569" />
+
+                    <!--  右侧：取消与保存按钮  -->
+                    <StackPanel
+                        HorizontalAlignment="Right"
+                        DockPanel.Dock="Right"
+                        Orientation="Horizontal">
+                        <Button
+                            Height="36"
+                            Margin="0,0,10,0"
+                            Padding="20,0"
+                            hc:BorderElement.CornerRadius="6"
+                            Background="#E2E8F0"
+                            BorderThickness="0"
+                            Click="BtnCancel_Click"
+                            Content="取消"
+                            Cursor="Hand"
+                            FontSize="13"
+                            FontWeight="Medium"
+                            Foreground="#334155" />
+                        <Button
+                            Height="36"
+                            Padding="24,0"
+                            hc:BorderElement.CornerRadius="6"
+                            Click="BtnSave_Click"
+                            Content="💾 保存并应用"
+                            Cursor="Hand"
+                            FontSize="13"
+                            FontWeight="Bold"
+                            Style="{StaticResource ButtonPrimary}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

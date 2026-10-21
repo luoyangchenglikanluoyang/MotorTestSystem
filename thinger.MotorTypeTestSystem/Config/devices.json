@@ -53,5 +53,14 @@
     "ComPort": "COM2",
     "BaudRate": 9600,
     "SlaveId": 1
+  },
+  {
+    "DeviceId": "TempMeter_1",
+    "DeviceName": "温度巡检仪",
+    "CommType": "ModbusRTU",
+    "AutoConnect": true,
+    "ComPort": "COM4",
+    "BaudRate": 9600,
+    "SlaveId": 1
   }
 ]

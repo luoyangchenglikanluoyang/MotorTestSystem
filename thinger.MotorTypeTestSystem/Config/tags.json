@@ -48,5 +48,78 @@
         "DataType": "Float"
       }
     ]
+  },
+  {
+    "DeviceId": "TempMeter_1",
+    "GroupName": "巡检仪_实时温度",
+    "FunctionCode": 3,
+    "StartAddress": 0,
+    "Length": 16,
+    "Tags": [
+      {
+        "TagName": "Temp.CH1",
+        "Offset": 0,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH2",
+        "Offset": 2,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH3",
+        "Offset": 4,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH4",
+        "Offset": 6,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH5",
+        "Offset": 8,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH6",
+        "Offset": 10,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH7",
+        "Offset": 12,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "Temp.CH8",
+        "Offset": 14,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      }
+    ]
   }
 ]

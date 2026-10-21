@@ -95,6 +95,7 @@ namespace thinger.MotorTypeTestSystem
             containerRegistry.RegisterSingleton<IDeviceManagerService, DeviceManagerService>();
             containerRegistry.RegisterSingleton<IHardwareManagerService, HardwareManagerService>();
             containerRegistry.RegisterSingleton<IMotorTestRepository, MotorTestRepository>();
+            containerRegistry.RegisterSingleton<ITempChannelService, TempChannelService>();
 
             // 2. 注册核心功能页面 (Prism Navigation)
             containerRegistry.RegisterForNavigation<HardwareConfigView, HardwareConfigViewModel>();
@@ -103,6 +104,7 @@ namespace thinger.MotorTypeTestSystem
             containerRegistry.RegisterForNavigation<NamePlateView, NamePlateViewModel>();
             containerRegistry.RegisterForNavigation<DcResistanceView, DcResistanceViewModel>();
             containerRegistry.RegisterForNavigation<HistoryQueryView, HistoryQueryViewModel>();
+            containerRegistry.RegisterForNavigation<TemperatureRiseView, TemperatureRiseViewModel>();
         }
 
         protected override Window CreateShell()

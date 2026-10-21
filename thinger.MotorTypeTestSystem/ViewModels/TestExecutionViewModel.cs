@@ -1,8 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,11 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         /// </summary>
         private readonly IContainerProvider _containerProvider;
 
+        private readonly TagPoolService _tagPool;//动态全局数据池
+        private readonly ITempChannelService _tempChannelService;//温度通道配置接口     
+        [ObservableProperty]
+        private ObservableCollection<TempCardItem> _activeTempCards = new();// 动态绑定到右侧界面的测温卡片集合
+
         // 核心缓存字典：存下当前这台电机已经点开过的子试验界面，来回切换绝不丢数据！
         private readonly Dictionary<string, FrameworkElement> _subViewCache = new();
 
@@ -41,12 +47,40 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         [ObservableProperty]
         private FrameworkElement? _currentSubView;
 
-        public TestExecutionViewModel(ILogger logger, IContainerProvider containerProvider)
+        public TestExecutionViewModel(ILogger logger, IContainerProvider containerProvider, TagPoolService tagPoolService ,ITempChannelService tempChannelService)
         {
             _logger = logger;
             _containerProvider = containerProvider;
-        }
+            _tagPool = tagPoolService;
+            _tempChannelService = tempChannelService;
 
+            //初始化时，先加载一次当前启用的通道
+            RefreshActiveTempCards();
+            //监听：一旦用户在弹窗里点击【保存并应用】，立即自动刷新右侧卡片！(等于用委托将两个方法绑定在一起)
+            _tempChannelService.ChannelsChanged += RefreshActiveTempCards;
+        }
+        #region MyRegion
+        /// <summary>
+        /// 当通道配置发生变化时，重新筛选出启用的卡片
+        /// </summary>
+        private void RefreshActiveTempCards()
+        {
+            ActiveTempCards.Clear();
+            foreach (var ch in _tempChannelService.Channels)
+            {
+                // 只有用户勾选了【启用】的通道，才放进右侧展示
+                if (ch.IsEnabled)
+                {
+                    ActiveTempCards.Add(new TempCardItem
+                    {
+                        PointName = ch.PointName,
+                        // 直接从变量池里把对应的 TagItem 抽出来绑在卡片上！
+                        Tag = _tagPool[ch.TagName]
+                    });
+                }
+            }
+        }
+        #endregion
         public bool KeepAlive => true;
 
         #region 点击左侧悬浮导航栏时触发：切换子试验界面
@@ -73,7 +107,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                     // 这里根据后续新建的 UserControl 名字一一对应即可
                     "Nameplate" => _containerProvider.Resolve<NamePlateView>(),
                     "DcResistance" => _containerProvider.Resolve<DcResistanceView>(),
-                    // "NoLoad"       => _containerProvider.Resolve<NoLoadTestView>(),
+                    "TemperatureRise" => _containerProvider.Resolve<TemperatureRiseView>(),
                     _ => null
                 };
 
@@ -208,5 +242,17 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             }
         }
         #endregion
+    }
+
+
+    /// <summary>
+    /// 右侧实时温度卡片的显示包装项
+    /// </summary>
+    public partial class TempCardItem : ObservableObject
+    {
+        [ObservableProperty]
+        private string _pointName = string.Empty;
+        // 对应的底层数据点（只要底层的 Value 变了，界面就会自动跳动！）
+        public TagItem Tag { get; set; } = null!;
     }
 }
