@@ -11,7 +11,7 @@ namespace thinger.MotorTypeTestSystem.Services
     public interface ITempChannelService
     {
         /// <summary>
-        /// 全局测温通道列表（8路）
+        /// 全局测温通道列表
         /// </summary>
         ObservableCollection<TempChannelConfig> Channels { get; }
 

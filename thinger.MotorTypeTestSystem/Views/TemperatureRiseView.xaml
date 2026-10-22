@@ -7,6 +7,7 @@
     xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
+    xmlns:controls="clr-namespace:thinger.MotorTypeTestSystem.Controls"
     xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
     d:DesignHeight="850"
     d:DesignWidth="1100"
@@ -107,20 +108,11 @@
                     Background="White"
                     CornerRadius="10"
                     Effect="{StaticResource EffectShadow2}">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            FontSize="18"
-                            FontWeight="SemiBold"
-                            Foreground="#64748B"
-                            Text="📈 温升曲线与监控工作区" />
-                        <TextBlock
-                            Margin="0,8,0,0"
-                            HorizontalAlignment="Center"
-                            FontSize="13"
-                            Foreground="#94A3B8"
-                            Text="点击右上角【⚙ 测点通道设置】即可随时配置巡检仪测点名称与通道启用状态" />
-                    </StackPanel>
+                    <controls:IndustrialTrendChart x:Name="TrendChart" 
+                               Title="📈 电机多通道温升历程曲线" 
+                               YAxisLabel="温度 (°C)" 
+                               MinHeight="500" 
+                               Margin="0,0,0,15" />
                 </Border>
             </StackPanel>
         </ScrollViewer>
