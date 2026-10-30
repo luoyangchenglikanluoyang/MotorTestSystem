@@ -18,6 +18,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         private readonly IMotorTestRepository _repo;
         private readonly ILogger _logger;
         private readonly IDeviceManagerService _deviceManager; //注入设备管理器
+        private readonly IResistanceMeterService _resistanceMeterService;
 
         //保存从主控台传过来的电机铭牌（含电机的流水号 Id、材料常数 K1 等）
         [ObservableProperty]
@@ -28,11 +29,12 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         private DcResistanceRecord _dcRecord = new();
 
 
-        public DcResistanceViewModel(IMotorTestRepository repo, ILogger logger, IDeviceManagerService deviceManagerService)
+        public DcResistanceViewModel(IMotorTestRepository repo, ILogger logger, IDeviceManagerService deviceManagerService, IResistanceMeterService resistanceMeterService)
         {
             _repo = repo;
             _logger = logger;
             _deviceManager = deviceManagerService;
+            _resistanceMeterService = resistanceMeterService;
         }
 
         #region 当切换到本页面时，总控台自动把电机的建档信息传进来
@@ -89,7 +91,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             double avg = (DcRecord.Ruv + DcRecord.Rvw + DcRecord.Rwu) / 3.0;
             DcRecord.AverageResistance = Math.Round(avg, 5); // 保留 5 位小数
 
-            // 2. 计算三相不平衡度 = (最大值 - 最小值) / 平均值 * 100%
+            // 2. 计算三相不平衡度 = (最大值 - 最小值) / 最小值 * 100%
             double max = Math.Max(DcRecord.Ruv, Math.Max(DcRecord.Rvw, DcRecord.Rwu));
             double min = Math.Min(DcRecord.Ruv, Math.Min(DcRecord.Rvw, DcRecord.Rwu));
             DcRecord.UnbalanceRate = Math.Round(((max - min) / min) * 100.0, 3); // 保留 3 位百分比
@@ -161,74 +163,28 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         {
             if (DcRecord == null || string.IsNullOrWhiteSpace(phase)) return;
 
-            try
+            // 🌟 核心：直接调用统一的微欧计服务
+            var (success, val, msg) = await _resistanceMeterService.ReadResistanceAsync();
+            if (!success)
             {
-                // 1. 从设备管理器拿到电桥的配置
-                var bridgeConfig = _deviceManager.DeviceConfigs.Find(d => d.DeviceId == "直流电阻仪");
-                if (bridgeConfig == null)
-                {
-                    Growl.Warning("未找到电桥设备配置 (Bridge_1)，请检查 devices.json！");
-                    return;
-                }
-                // 2. 拿到电桥的通讯服务
-                object service = ConnectionManager.GetService(bridgeConfig);
-                if (service == null)
-                {
-                    Growl.Warning("电桥尚未连接，请先在硬件配置中连接电桥！");
-                    return;
-                }
-
-                double currentVal = 0;
-
-                if (service is ModbusRTUService rtu && rtu.IsConnected)
-                {
-                    // 假设电桥保持寄存器从 0 开始，长度为 2 (Float 占 2 个寄存器)
-                    ushort[] raw = await rtu.ReadHoldingRegistersAsync(bridgeConfig.SlaveId, 0, 2);
-                    if (raw != null && raw.Length >= 2)
-                    {
-                        if (CustomModbusParsers.Parsers.TryGetValue("电桥_毫欧转欧姆", out var parseFunc))
-                        {
-                            currentVal = Convert.ToDouble(parseFunc(raw, 0));
-                        }
-                    }
-                }
-                else if (service is ModbusTCPService tcp && tcp.IsConnected)
-                {
-                    ushort[] raw = await tcp.ReadHoldingRegistersAsync(0, 2);
-                    if (raw != null && raw.Length >= 2)
-                    {
-                        //此解析方式为自带，如有解析方式可更换
-                        currentVal = tcp.RegistersToFloat(raw, 0, ModbusTCPService.ModbusFloatByteOrder.BigEndian);
-                    }
-                }
-                if (currentVal <= 0)
-                {
-                    Growl.Warning("采集到的电阻值为 0 或未读取到有效数值，请检查接线！");
-                    return;
-                }
-
-                // 4. 格式化并赋值给对应的相
-                currentVal = Math.Round(currentVal, 5);
-                switch (phase.ToUpper())
-                {
-                    case "UV":
-                        DcRecord.Ruv = currentVal;
-                        Growl.Success($"已采入 U-V 阻值：{currentVal} Ω");
-                        break;
-                    case "VW":
-                        DcRecord.Rvw = currentVal;
-                        Growl.Success($"已采入 V-W 阻值：{currentVal} Ω");
-                        break;
-                    case "WU":
-                        DcRecord.Rwu = currentVal;
-                        Growl.Success($"已采入 W-U 阻值：{currentVal} Ω");
-                        break;
-                }
+                Growl.Warning(msg);
+                return;
             }
-            catch (Exception ex)
+
+            switch (phase.ToUpper())
             {
-                _logger.Error(ex, $"单次采入 {phase} 线电阻失败");
-                Growl.Error($"采集失败：{ex.Message}");
+                case "UV":
+                    DcRecord.Ruv = val;
+                    Growl.Success($"已采入 U-V 阻值：{val} Ω");
+                    break;
+                case "VW":
+                    DcRecord.Rvw = val;
+                    Growl.Success($"已采入 V-W 阻值：{val} Ω");
+                    break;
+                case "WU":
+                    DcRecord.Rwu = val;
+                    Growl.Success($"已采入 W-U 阻值：{val} Ω");
+                    break;
             }
         }
         #endregion

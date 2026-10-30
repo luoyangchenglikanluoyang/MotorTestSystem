@@ -3,6 +3,7 @@ using ScottPlot;
 using ScottPlot.Plottables;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Path = System.IO.Path;
 
 namespace thinger.MotorTypeTestSystem.Controls
 {
@@ -70,11 +72,15 @@ namespace thinger.MotorTypeTestSystem.Controls
             Loaded += (s, e) => InitPlotStyle();
         }
 
+        #region scottplot的初始化
+        /// <summary>
+        /// scottplot的初始化
+        /// </summary>
         private void InitPlotStyle()
         {
             var plot = MainPlot.Plot;
 
-          
+
 
             // 1. 设置坐标轴名称与字号
             plot.Axes.Left.Label.Text = YAxisLabel;
@@ -111,10 +117,17 @@ namespace thinger.MotorTypeTestSystem.Controls
             plot.FigureBackground.Color = ScottPlot.Colors.White;
             plot.DataBackground.Color = ScottPlot.Color.FromHex("#FAFAFA");
 
-            // 6. 初始视口范围：Y 轴 0 ~ 120 °C，X 轴从当前时间起往后 30 分钟
-            DateTime now = DateTime.Now;
-            plot.Axes.SetLimitsX(now.ToOADate(), now.AddMinutes(30).ToOADate());
-            plot.Axes.SetLimitsY(0, 120);
+            // 6. 初始视口范围：如果已经有曲线数据，直接自适应；只有全新无数据时才默认当前时间 30 分钟
+            if (_channelLoggers.Count > 0 && _channelLoggers.Values.Any(l => l.Data.Coordinates.Count > 0))
+            {
+                ApplyIndustrialAutoScale();
+            }
+            else
+            {
+                DateTime now = DateTime.Now;
+                plot.Axes.SetLimitsX(now.ToOADate(), now.AddMinutes(30).ToOADate());
+            }
+            plot.Axes.SetLimitsY(0, 180);
 
             // 🌟 7. 挂载全局渲染拦截器：无论鼠标怎么缩放、拖拽，在每帧渲染前锁定 Y 轴最低为 0
             plot.RenderManager.RenderStarting += (s, e) =>
@@ -122,8 +135,19 @@ namespace thinger.MotorTypeTestSystem.Controls
                 EnsureYAxesNonNegative();
             };
             plot.Font.Automatic();
+
+            // 1. 清空所有默认的鼠标按键行为
+            MainPlot.UserInputProcessor.UserActionResponses.Clear();
+            // 2. 只把“鼠标左键平移”加回来，不加任何滚轮缩放行为
+            var leftButton = ScottPlot.Interactivity.StandardMouseButtons.Left;
+            MainPlot.UserInputProcessor.UserActionResponses.Add(
+                new ScottPlot.Interactivity.UserActionResponses.MouseDragPan(leftButton)
+            );
+
             MainPlot.Refresh();
         }
+
+        #endregion
 
         #region 获取或创建Y轴的方法
         /// <summary>
@@ -146,7 +170,7 @@ namespace thinger.MotorTypeTestSystem.Controls
             }
             else
             {
-                // 如果是第二条、第三条轴：自动在右侧并排追加新的 Y 轴！
+                // 如果是第二条、第三条轴：自动在左侧并排追加新的 Y 轴！
                 var leftAxis = MainPlot.Plot.Axes.AddLeftAxis();
                 leftAxis.LabelText = axisName;
                 leftAxis.LabelFontName = "Microsoft YaHei";
@@ -199,29 +223,30 @@ namespace thinger.MotorTypeTestSystem.Controls
                 logger.Color = color;
                 logger.LineWidth = 2;
 
-                // 🌟 核心一：禁用曲线自带的视野管理，禁止多条曲线互相打架！
+                // 禁用曲线自带的视野管理，禁止多条曲线互相打架！
                 logger.ManageAxisLimits = false;
 
                 logger.Axes.YAxis = GetOrCreateYAxis(targetAxisName);
                 _channelLoggers[channelName] = logger;
-
                 MainPlot.Plot.Font.Automatic();
             }
 
             // 压入数据点
             logger.Add(time.ToOADate(), value);
 
-            // 🌟 核心二：底刻度必须焊死在 0！只在温度突破上限时，向上扩容顶刻度
+            //底刻度必须焊死在 0！只在温度突破上限时，向上扩容顶刻度
             MainPlot.Plot.Axes.Left.Min = 0;
             if (value > MainPlot.Plot.Axes.Left.Max - 5)
             {
                 MainPlot.Plot.Axes.Left.Max = Math.Ceiling(value + 15);
             }
 
-            // 🌟 核心三：如果试验时间走出了右边界，X 轴平滑向右扩展 5 分钟
-            if (time.ToOADate() > MainPlot.Plot.Axes.Bottom.Max)
+            // 改为提前 10 分钟预判延伸（消除撞墙压抑感）：
+            // 10 分钟对应的 OADate 差值 = 10 / (24小时 * 60分钟)
+            double twoMinutesOADate = 10.0 / (24.0 * 60.0);
+            if (time.ToOADate() >= MainPlot.Plot.Axes.Bottom.Max - twoMinutesOADate)
             {
-                MainPlot.Plot.Axes.Bottom.Max = time.AddMinutes(5).ToOADate();
+                MainPlot.Plot.Axes.Bottom.Max = time.AddMinutes(30).ToOADate();
             }
 
             MainPlot.Refresh();
@@ -348,6 +373,7 @@ namespace thinger.MotorTypeTestSystem.Controls
                 Clear();
             }
         }
+        #region 曲线截图保存图片按钮及路径
         private void BtnSaveImage_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new SaveFileDialog
@@ -361,7 +387,157 @@ namespace thinger.MotorTypeTestSystem.Controls
                 HandyControl.Controls.Growl.Success("曲线截图已成功导出！");
             }
         }
+
+        /// <summary>
+        /// 供外部自动调用：将当前曲线渲染为高清图片并静默保存到指定路径
+        /// </summary>
+        public bool SaveImage(string filePath)
+        {
+            try
+            {
+                string? dir = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+                // 保存 1300x800 分辨率的高清截图
+                MainPlot.Plot.SavePng(filePath, 1300, 800);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         #endregion
+
+
+
+        #region 曲线的数据导出
+        /// <summary>
+        /// 实现曲线的数据导出为CSV文件（Excel型式）按钮执行的代码
+        /// </summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnExportCsv_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new SaveFileDialog
+            {
+                Filter = "CSV 数据表格 (*.csv)|*.csv",
+                FileName = $"温升曲线_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                if (SaveToCsv(dlg.FileName))
+                    HandyControl.Controls.Growl.Success($"曲线数据已成功导出为 CSV！\n{dlg.FileName}");
+                else
+                    HandyControl.Controls.Growl.Warning("当前暂无有效曲线数据可导出！");
+            }
+        }
+
+        public bool SaveToCsv(string filePath)
+        {
+            try
+            {
+                if (_channelLoggers.Count == 0 || !_channelLoggers.Values.Any(l => l.Data.Coordinates.Count > 0))
+                    return false;
+                string? dir = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+                var channelNames = _channelLoggers.Keys.ToList();
+
+                //外层是 SortedDictionary<string, ...>：键（Key）是时间字符串（如 "14:00:00"）。用 SortedDictionary 的特点是无论插入顺序如何，它内部永远自动按时间从小到大升序排列！
+                //内层是 Dictionary<string, double>：存这一秒下，哪个通道对应多少度（例如["前轴承"] = 28.5）。
+                var timeRowMap = new SortedDictionary<string, Dictionary<string, double>>();
+
+                foreach (var (channelName, logger) in _channelLoggers)
+                {
+                    foreach (var pt in logger.Data.Coordinates)
+                    {
+                        string timeStr = DateTime.FromOADate(pt.X).ToString("yyyy-MM-dd HH:mm:ss");
+                        if (!timeRowMap.TryGetValue(timeStr, out var row))
+                        {
+                            row = new Dictionary<string, double>();
+                            timeRowMap[timeStr] = row;
+                        }
+                        row[channelName] = pt.Y;
+                    }
+                }
+                // 使用带 UTF-8 BOM 编码，防止 Excel 中文表头乱码
+                using var writer = new StreamWriter(filePath, false, new UTF8Encoding(true));
+                var headers = new List<string> { "采集时间" };
+                headers.AddRange(channelNames);
+                writer.WriteLine(string.Join(",", headers));
+                foreach (var (timeStr, row) in timeRowMap)
+                {
+                    var lineCols = new List<string> { timeStr };
+                    foreach (var ch in channelNames)
+                    {
+                        lineCols.Add(row.TryGetValue(ch, out double val) ? val.ToString("F2") : "");
+                    }
+                    writer.WriteLine(string.Join(",", lineCols));
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 仅供系统内部自动回显调用：从指定文件自动恢复重绘历史曲线
+        /// </summary>
+        public bool LoadFromCsv(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return false;
+                var lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                if (lines.Length <= 1) return false;
+                // 1. 清空当前图表
+                Clear();
+                // 2. 解析表头测点名称
+                var headers = lines[0].Split(',');
+                if (headers.Length < 2) return false;
+                // 3. 逐行读入并压点重绘
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    string line = lines[i].Trim();
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    var cols = line.Split(',');
+                    if (cols.Length < headers.Length) continue;
+                    if (DateTime.TryParse(cols[0], out DateTime time))
+                    {
+                        for (int c = 1; c < headers.Length; c++)
+                        {
+                            string channelName = headers[c].Trim();
+                            if (double.TryParse(cols[c], out double val))
+                            {
+                                AddPoint(channelName, time, val);
+                            }
+                        }
+                    }
+                }
+                // 4. 重绘完毕后自动调整最佳视野
+                ApplyIndustrialAutoScale();
+                EnsureYAxesNonNegative();
+                MainPlot.Refresh();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        #endregion
+
+
+        #endregion
+
 
     }
 }

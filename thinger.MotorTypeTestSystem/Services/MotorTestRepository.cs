@@ -1,4 +1,4 @@
-﻿using HandyControl.Controls;
+using HandyControl.Controls;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,6 @@ namespace thinger.MotorTypeTestSystem.Services
     {
         private readonly IDatabaseService _dbService;
         private readonly ILogger _Logger;
-
         public MotorTestRepository(IDatabaseService databaseService,ILogger logger)
         {
             _dbService = databaseService;
@@ -208,5 +207,66 @@ namespace thinger.MotorTypeTestSystem.Services
                 throw;
             }
         }
+
+        /// <summary>
+        /// 根据主表流水号获取温升试验数据（进入页面自动回显）
+        /// </summary>
+        /// <param name="recordId"></param>
+        /// <returns></returns>
+        public async Task<TemperatureRiseRecord?> GetTemperatureRiseByRecordIdAsync(string recordId)
+        {
+            string sql = "SELECT * FROM motor_temperature_rise WHERE RecordId = @RecordId LIMIT 1;";
+
+            try
+            {
+                return await _dbService.QueryFirstOrDefaultAsync<TemperatureRiseRecord>(sql, new { RecordId = recordId });
+            }
+            catch (Exception ex)
+            {
+                _Logger.Error(ex, $"查询试验 [{recordId}] 的温升数据发生异常");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 将温升记录数据保存到数据库当中
+        /// </summary>
+        /// <param name="record"></param>
+        /// <returns></returns>
+        public async Task<bool> SaveTemperatureRiseAsync(TemperatureRiseRecord record)
+        {
+            try
+            {
+                string sql = @"INSERT INTO motor_temperature_rise 
+            (RecordId, ColdResistance, ColdTemp, HotRuv, HotRvw, HotRwu, HotResistance, 
+             ShutdownAmbientTemp, MaxBearingTemp, HotWindingTemp, TemperatureRise, 
+             AllowedTempRise, IsQualified, TestDuration, CurveDataFilePath, CurveImagePath, TestTime, SnapshotsJson)
+            VALUES 
+            (@RecordId, @ColdResistance, @ColdTemp, @HotRuv, @HotRvw, @HotRwu, @HotResistance, 
+             @ShutdownAmbientTemp, @MaxBearingTemp, @HotWindingTemp, @TemperatureRise, 
+             @AllowedTempRise, @IsQualified, @TestDuration, @CurveDataFilePath, @CurveImagePath, @TestTime, @SnapshotsJson)
+            ON DUPLICATE KEY UPDATE 
+             ColdResistance=@ColdResistance, ColdTemp=@ColdTemp,
+             HotRuv=@HotRuv, HotRvw=@HotRvw, HotRwu=@HotRwu, HotResistance=@HotResistance,
+             ShutdownAmbientTemp=@ShutdownAmbientTemp, MaxBearingTemp=@MaxBearingTemp,
+             HotWindingTemp=@HotWindingTemp, TemperatureRise=@TemperatureRise,
+             AllowedTempRise=@AllowedTempRise, IsQualified=@IsQualified,
+             TestDuration=@TestDuration, CurveDataFilePath=@CurveDataFilePath, 
+             CurveImagePath=@CurveImagePath, TestTime=@TestTime, SnapshotsJson=@SnapshotsJson;";
+                int rows = await _dbService.ExecuteAsync(sql, record);
+                if (rows > 0)
+                {
+                    _Logger.Information($"试验 [{record.RecordId}] 温升数据保存/更新成功");
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _Logger.Error(ex, $"试验 [{record.RecordId}] 温升数据保存异常");
+                throw;
+            }
+        }
+
     }
 }

@@ -8,7 +8,7 @@
     xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-    d:DesignHeight="450"
+    d:DesignHeight="850"
     d:DesignWidth="800"
     Background="White"
     mc:Ignorable="d">
@@ -50,7 +50,7 @@
                         Background="#F1F5F9"
                         BorderThickness="0"
                         Click="BtnAutoScale_Click"
-                        Content="🔍 视野自适应"
+                        Content="🔍 自适应"
                         Cursor="Hand"
                         FontSize="12"
                         Foreground="#334155" />
@@ -63,6 +63,18 @@
                         BorderThickness="0"
                         Click="BtnSaveImage_Click"
                         Content="📷 导出截图"
+                        Cursor="Hand"
+                        FontSize="12"
+                        Foreground="#334155" />
+                    <Button
+                        Height="30"
+                        Margin="0,0,6,0"
+                        Padding="12,0"
+                        hc:BorderElement.CornerRadius="4"
+                        Background="#F1F5F9"
+                        BorderThickness="0"
+                        Click="BtnExportCsv_Click"
+                        Content="📊 导出CSV"
                         Cursor="Hand"
                         FontSize="12"
                         Foreground="#334155" />

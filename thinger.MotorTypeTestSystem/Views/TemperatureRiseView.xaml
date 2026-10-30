@@ -2,18 +2,36 @@
     x:Class="thinger.MotorTypeTestSystem.Views.TemperatureRiseView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:thinger.MotorTypeTestSystem.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:thinger.MotorTypeTestSystem.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
-    xmlns:controls="clr-namespace:thinger.MotorTypeTestSystem.Controls"
     xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-    d:DesignHeight="850"
-    d:DesignWidth="1100"
+    d:DesignHeight="2450"
+    d:DesignWidth="1700"
     prism:ViewModelLocator.AutoWireViewModel="True"
     Background="White"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="CenterTextBlock" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="BoldCenterTextBlock" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#0F172A" />
+        </Style>
+        <Style x:Key="HighlightRedTextBlock" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
             <StackPanel>
@@ -62,57 +80,1092 @@
                             </Border>
                         </StackPanel>
 
-                        <!--  右侧：操作按钮组  -->
-                        <!-- 右侧：试验控制按钮组与实时状态指示 -->
-                        <StackPanel HorizontalAlignment="Right" DockPanel.Dock="Right" Orientation="Horizontal">
+                        <!--  右侧：操作按钮组与实时状态指示  -->
+                        <StackPanel
+                            HorizontalAlignment="Right"
+                            DockPanel.Dock="Right"
+                            Orientation="Horizontal">
 
-                            <!-- 1. 试验运行时间胶囊 -->
-                            <Border Margin="0,0,12,0" Padding="12,6" Background="#F1F5F9" CornerRadius="6" VerticalAlignment="Center">
+                            <!--  1. 试验运行时间胶囊  -->
+                            <Border
+                                Margin="0,0,12,0"
+                                Padding="12,6"
+                                VerticalAlignment="Center"
+                                Background="#F1F5F9"
+                                BorderBrush="#E2E8F0"
+                                BorderThickness="1"
+                                CornerRadius="6">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⏱ 试验时长：" FontSize="12" Foreground="#64748B" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding ElapsedTimeString, FallbackValue='00:00:00'}" 
-                       FontSize="13" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="#64748B"
+                                        Text="⏱ 试验时长：" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="13"
+                                        FontWeight="Bold"
+                                        Foreground="#0F172A"
+                                        Text="{Binding ElapsedTimeString, FallbackValue='00:00:00'}" />
                                 </StackPanel>
                             </Border>
-                            <!-- 2. 国标热稳定状态胶囊 -->
-                            <Border Margin="0,0,12,0" Padding="12,6" Background="#FEF3C7" CornerRadius="6" VerticalAlignment="Center">
+
+                            <!--  2. 🌟 国标各部位热稳定综合状态徽章（动态切换暖黄升温与清新护眼亮绿平衡）  -->
+                            <Border
+                                Margin="0,0,12,0"
+                                Padding="14,6"
+                                VerticalAlignment="Center"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <!--  默认未开始状态：浅灰底  -->
+                                        <Setter Property="Background" Value="#F8FAFC" />
+                                        <Setter Property="BorderBrush" Value="#E2E8F0" />
+                                        <Style.Triggers>
+                                            <!--  试验中但尚未完全稳定：暖黄预警色  -->
+                                            <DataTrigger Binding="{Binding IsTesting}" Value="True">
+                                                <Setter Property="Background" Value="#FEF3C7" />
+                                                <Setter Property="BorderBrush" Value="#FCD34D" />
+                                            </DataTrigger>
+                                            <!--  🌟 全机各部位均达到 GB/T 1032 国标热稳定 (v_max <= 1.0 K/h)：清新护眼亮绿！  -->
+                                            <DataTrigger Binding="{Binding IsThermalStabilized}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7" />
+                                                <Setter Property="BorderBrush" Value="#86EFAC" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="🔥 热稳定判定：" FontSize="12" Foreground="#D97706" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding ThermalStatusText, FallbackValue='未开始'}" 
-                       FontSize="13" FontWeight="Bold" Foreground="#B45309" VerticalAlignment="Center" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="🔥 热稳定判定：">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#64748B" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTesting}" Value="True">
+                                                        <Setter Property="Foreground" Value="#D97706" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsThermalStabilized}" Value="True">
+                                                        <Setter Property="Foreground" Value="#15803D" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="13"
+                                        FontWeight="Bold"
+                                        Text="{Binding ThermalStatusText, FallbackValue='未开始'}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#334155" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTesting}" Value="True">
+                                                        <Setter Property="Foreground" Value="#B45309" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsThermalStabilized}" Value="True">
+                                                        <Setter Property="Foreground" Value="#15803D" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </StackPanel>
                             </Border>
-                            <!-- 3. 通道设置按钮 -->
-                            <Button Height="38" Margin="0,0,8,0" Padding="14,0" hc:BorderElement.CornerRadius="6"
-            Background="#F1F5F9" BorderThickness="1" BorderBrush="#CBD5E1"
-            Command="{Binding OpenChannelConfigCommand}" Content="⚙ 测点配置"
-            Cursor="Hand" FontSize="13" FontWeight="SemiBold" Foreground="#334155" />
-                            <!-- 4. 开始试验按钮 -->
-                            <Button Height="38" Margin="0,0,8,0" Padding="18,0" hc:BorderElement.CornerRadius="6"
-            Command="{Binding StartTestCommand}" Content="▶ 开始试验"
-            Cursor="Hand" FontSize="13" FontWeight="Bold" Style="{StaticResource ButtonPrimary}" />
-                            <!-- 5. 停止试验按钮 -->
-                            <Button Height="38" Padding="16,0" hc:BorderElement.CornerRadius="6"
-            Command="{Binding StopTestCommand}" Content="⏹ 停止试验"
-            Cursor="Hand" FontSize="13" FontWeight="Bold" Background="#DC2626" Foreground="White" BorderThickness="0" />
+
+                            <!--  3. 通道设置按钮  -->
+                            <Button
+                                Height="38"
+                                Margin="0,0,8,0"
+                                Padding="14,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Background="#F1F5F9"
+                                BorderBrush="#CBD5E1"
+                                BorderThickness="1"
+                                Command="{Binding OpenChannelConfigCommand}"
+                                Content="⚙ 测点配置"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Foreground="#334155" />
+
+                            <!--  4. 开始试验按钮  -->
+                            <Button
+                                Height="38"
+                                Margin="0,0,8,0"
+                                Padding="18,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Command="{Binding StartTestCommand}"
+                                Content="▶ 开始试验"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Style="{StaticResource ButtonPrimary}" />
+
+                            <Button
+    Height="38"
+    Margin="0,0,8,0"
+    Padding="14,0"
+    hc:BorderElement.CornerRadius="6"
+    Command="{Binding TogglePauseCommand}"
+    Cursor="Hand"
+    FontSize="13"
+    FontWeight="Bold">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <!-- 默认未试验状态：浅灰禁用 -->
+                                        <Setter Property="Content" Value="⏸ 暂停试验" />
+                                        <Setter Property="Background" Value="#F59E0B" />
+                                        <Setter Property="Foreground" Value="White" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="IsEnabled" Value="{Binding IsTesting}" />
+                                        <Style.Triggers>
+                                            <!-- 当 IsTesting 为 False 时变灰禁用 -->
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Background" Value="#E2E8F0" />
+                                                <Setter Property="Foreground" Value="#94A3B8" />
+                                            </Trigger>
+                                            <!-- 当处于暂停状态时：切换为清新亮绿的【继续试验】 -->
+                                            <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                                <Setter Property="Content" Value="▶ 继续试验" />
+                                                <Setter Property="Background" Value="#059669" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!--  5. 停止试验按钮  -->
+                            <Button
+                                Height="38"
+                                Padding="16,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Background="#DC2626"
+                                BorderThickness="0"
+                                Command="{Binding StopTestCommand}"
+                                Content="⏹ 停止试验"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="White" />
                         </StackPanel>
                     </DockPanel>
                 </Border>
 
                 <!--  =========================================================================  -->
-                <!--  主体区域：预留折线图与状态监控区  -->
+                <!--  主体区域：工业级温升曲线绘制区  -->
+                <!--  =========================================================================  -->
+                <controls:IndustrialTrendChart
+                    x:Name="TrendChart"
+                    Title="📈 电机多通道温升历程曲线"
+                    MinHeight="600"
+                    Margin="0,0,0,15"
+                    YAxisLabel="温度 (°C)" />
+
+                <!--  =========================================================================  -->
+                <!--  工况记录区域：GB/T 1032-2023 试验过程工况记录表 (每 30 分钟自动记录 / 手动采集)  -->
                 <!--  =========================================================================  -->
                 <Border
-                    MinHeight="500"
-                    Padding="24"
+                    Margin="0,0,0,18"
+                    Padding="20,16"
                     Background="White"
-                    CornerRadius="10"
+                    BorderBrush="#E2E8F0"
+                    BorderThickness="1"
+                    CornerRadius="8"
                     Effect="{StaticResource EffectShadow2}">
-                    <controls:IndustrialTrendChart x:Name="TrendChart" 
-                               Title="📈 电机多通道温升历程曲线" 
-                               YAxisLabel="温度 (°C)" 
-                               MinHeight="500" 
-                               Margin="0,0,0,15" />
+                    <DockPanel>
+                        <!--  顶部标题与操作栏  -->
+                        <DockPanel Margin="0,0,0,12" DockPanel.Dock="Top">
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Text="📋 试验过程工况记录" />
+                                <Border
+                                    Margin="12,0,0,0"
+                                    Padding="10,3"
+                                    VerticalAlignment="Center"
+                                    Background="#EFF6FF"
+                                    BorderBrush="#BFDBFE"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="#2563EB"
+                                        Text="⏱ GB/T 1032-2023：连续工作制 S1 每隔 30 分钟自动记录一组完整工况数据" />
+                                </Border>
+                            </StackPanel>
+
+                            <!--  右侧操作按钮组：【自动采集开关】+【手动采集】+【清空记录】  -->
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <!--  自动采集切换开关  -->
+                                <ToggleButton
+                                    Height="34"
+                                    Margin="0,0,10,0"
+                                    Padding="14,0"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Cursor="Hand"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    IsChecked="{Binding IsAutoSampleEnabled}">
+                                    <ToggleButton.Style>
+                                        <Style TargetType="ToggleButton">
+                                            <Setter Property="Background" Value="#F8FAFC" />
+                                            <Setter Property="BorderBrush" Value="#CBD5E1" />
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Setter Property="Foreground" Value="#64748B" />
+                                            <Setter Property="Content" Value="⏸️ 自动采集：已停用" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter Property="Background" Value="#EFF6FF" />
+                                                    <Setter Property="BorderBrush" Value="#93C5FD" />
+                                                    <Setter Property="Foreground" Value="#2563EB" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                    <Setter Property="Content" Value="⏱️ 自动采集：运行中 (30min)" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ToggleButton.Style>
+                                </ToggleButton>
+
+                                <Button
+                                    Height="34"
+                                    Margin="0,0,8,0"
+                                    Padding="16,0"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Background="#059669"
+                                    BorderThickness="0"
+                                    Command="{Binding ManualSampleProcessRecordCommand}"
+                                    Content="➕ 手动采集"
+                                    Cursor="Hand"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Foreground="White" />
+
+                                <Button
+                                    Height="34"
+                                    Padding="12,0"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Background="#F8FAFC"
+                                    BorderBrush="#E2E8F0"
+                                    BorderThickness="1"
+                                    Command="{Binding ClearProcessRecordsCommand}"
+                                    Content="🧹 清空记录"
+                                    Cursor="Hand"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="#64748B" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!--  过程工况记录 DataGrid (深度优化清晰高对比度行选中、反选交互及单行删除)  -->
+                        <DataGrid
+                            MaxHeight="280"
+                            AutoGenerateColumns="False"
+                            Background="White"
+                            BorderBrush="#E2E8F0"
+                            BorderThickness="1"
+                            CanUserAddRows="False"
+                            CanUserDeleteRows="False"
+                            GridLinesVisibility="Horizontal"
+                            HeadersVisibility="Column"
+                            HorizontalGridLinesBrush="#F1F5F9"
+                            IsReadOnly="True"
+                            ItemsSource="{Binding ProcessRecords}"
+                            PreviewMouseDown="ProcessDataGrid_PreviewMouseDown"
+                            RowHeaderWidth="0"
+                            SelectionMode="Single"
+                            SelectionUnit="FullRow"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Resources>
+                                <!--  选中行高亮柔和浅蓝背景，确保深色文字清晰易读  -->
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#E0F2FE" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#0F172A" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#F1F5F9" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#0F172A" />
+                            </DataGrid.Resources>
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#F8FAFC" />
+                                    <Setter Property="Foreground" Value="#475569" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="FontSize" Value="12" />
+                                    <Setter Property="Height" Value="34" />
+                                    <Setter Property="Padding" Value="10,0" />
+                                    <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                    <Setter Property="BorderBrush" Value="#E2E8F0" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Height" Value="34" />
+                                    <Setter Property="FontSize" Value="13" />
+                                    <Setter Property="Foreground" Value="#0F172A" />
+                                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu>
+                                                <MenuItem
+                                                    Command="{Binding DataContext.DeleteProcessRecordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Header="🗑️ 删除当前记录行" />
+                                                <Separator />
+                                                <MenuItem Command="{Binding DataContext.ClearProcessRecordsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" Header="🧹 清空全部工况记录" />
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#F8FAFC" />
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#E0F2FE" />
+                                            <Setter Property="Foreground" Value="#0F172A" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn
+                                    Width="55"
+                                    Binding="{Binding Index}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="序号" />
+                                <DataGridTextColumn
+                                    Width="95"
+                                    Binding="{Binding ElapsedTimeString}"
+                                    ElementStyle="{StaticResource BoldCenterTextBlock}"
+                                    Header="试验历时" />
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding TimeString}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="记录时间" />
+                                <DataGridTextColumn
+                                    Width="95"
+                                    Binding="{Binding Voltage, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="电压 U (V)" />
+                                <DataGridTextColumn
+                                    Width="95"
+                                    Binding="{Binding Current, StringFormat={}{0:F2}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="电流 I (A)" />
+                                <DataGridTextColumn
+                                    Width="140"
+                                    Binding="{Binding ActivePower, StringFormat={}{0:F2}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="输入功率 P1 (kW)" />
+                                <DataGridTextColumn
+                                    Width="85"
+                                    Binding="{Binding Frequency, StringFormat={}{0:F2}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="频率 (Hz)" />
+                                <DataGridTextColumn
+                                    Width="85"
+                                    Binding="{Binding PowerFactor, StringFormat={}{0:F3}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="功率因数" />
+                                <DataGridTextColumn
+                                    Width="95"
+                                    Binding="{Binding Speed, StringFormat={}{0:F0}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="转速 (r/min)" />
+                                <DataGridTextColumn
+                                    Width="95"
+                                    Binding="{Binding Torque, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="转矩 (N·m)" />
+                                <DataGridTextColumn
+                                    Width="110"
+                                    Binding="{Binding MotorTemp, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource HighlightRedTextBlock}"
+                                    Header="绕组/机壳 (℃)" />
+                                <DataGridTextColumn
+                                    Width="105"
+                                    Binding="{Binding BearingTemp, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="轴承最高 (℃)" />
+                                <DataGridTextColumn
+                                    Width="105"
+                                    Binding="{Binding AmbientTemp, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="环境温度 (℃)" />
+                                <!--  🌟 操作列：单行删除按钮  -->
+                                <DataGridTemplateColumn Width="90" Header="操作">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                Height="24"
+                                                Padding="10,0"
+                                                HorizontalAlignment="Center"
+                                                hc:BorderElement.CornerRadius="4"
+                                                Background="#FEE2E2"
+                                                BorderThickness="0"
+                                                Command="{Binding DataContext.DeleteProcessRecordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Content="删除"
+                                                Cursor="Hand"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="#DC2626">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#DC2626" />
+                                                                <Setter Property="Foreground" Value="White" />
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+
+                <!--  =========================================================================  -->
+                <!--  底部：温升参数核算与判定区域（高清锐利、大字高对比度版）  -->
+                <!--  =========================================================================  -->
+                <Grid
+                    Margin="0,5,0,25"
+                    SnapsToDevicePixels="True"
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextRenderingMode="ClearType"
+                    UseLayoutRounding="True">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />
+                        <!--  第 1 列：冷态基准  -->
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="1.2*" />
+                        <!--  第 2 列：停机热态测量  -->
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="1.1*" />
+                        <!--  第 3 列：温升核算与裁决  -->
+                    </Grid.ColumnDefinitions>
+
+                    <!--  第 1 列卡片：冷态基准与考核限值  -->
+                    <Border
+                        Grid.Column="0"
+                        Padding="22"
+                        Background="White"
+                        CornerRadius="10"
+                        Effect="{StaticResource EffectShadow2}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,20">
+                                <Border
+                                    Width="5"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    Background="#2563EB"
+                                    CornerRadius="2" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Text="❄️ 冷态基准与考核限值" />
+                            </DockPanel>
+
+                            <!--  1. 冷态平均电阻 R1  -->
+                            <TextBlock
+                                Margin="0,0,0,6"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="#334155"
+                                Text="冷态平均电阻 R1 (Ω)" />
+                            <TextBox
+                                Margin="0,0,0,16"
+                                HorizontalContentAlignment="Center"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Foreground="#0F172A"
+                                Style="{StaticResource UnderlineTextBoxStyle}"
+                                Text="{Binding TempRecord.ColdResistance, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F5}}" />
+
+                            <!--  2. 冷态测量温度 θ1  -->
+                            <TextBlock
+                                Margin="0,0,0,6"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="#334155"
+                                Text="冷态基准温度 θ1 (℃)" />
+                            <TextBox
+                                Margin="0,0,0,16"
+                                HorizontalContentAlignment="Center"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Foreground="#0F172A"
+                                Style="{StaticResource UnderlineTextBoxStyle}"
+                                Text="{Binding TempRecord.ColdTemp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F1}}" />
+
+                            <!--  3. 电机绝缘等级  -->
+                            <TextBlock
+                                Margin="0,0,0,6"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="#334155"
+                                Text="电机名牌绝缘等级" />
+                            <TextBox
+                                Margin="0,0,0,16"
+                                HorizontalContentAlignment="Center"
+                                Background="#F8FAFC"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Foreground="#0F172A"
+                                IsReadOnly="True"
+                                Style="{StaticResource UnderlineTextBoxStyle}"
+                                Text="{Binding MotorRecord.InsulationClass, FallbackValue='F 级'}" />
+
+                            <!--  4. 允许温升上限  -->
+                            <TextBlock
+                                Margin="0,0,0,6"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="#334155"
+                                Text="标准允许温升限值 (K)" />
+                            <TextBox
+                                HorizontalContentAlignment="Center"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Foreground="#0F172A"
+                                Style="{StaticResource UnderlineTextBoxStyle}"
+                                Text="{Binding TempRecord.AllowedTempRise, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F1}}" />
+                            
+                            <!--  5. 允许允许轴承最高温度限值 (℃)  -->
+                                <TextBlock
+                                Margin="0,16,0,6"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="#334155"
+                                Text="允许轴承温度限值 (℃)" />
+                                <TextBox
+                                HorizontalContentAlignment="Center"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Foreground="#0F172A"
+                                Style="{StaticResource UnderlineTextBoxStyle}"
+                                Text="{Binding TempRecord.AllowedBearingTemp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F1}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--  第 2 列卡片：停机热态测量区（高对比度）  -->
+                    <Border
+                        Grid.Column="2"
+                        Padding="22"
+                        Background="White"
+                        CornerRadius="10"
+                        Effect="{StaticResource EffectShadow2}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,20">
+                                <Border
+                                    Width="5"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    Background="#EA580C"
+                                    CornerRadius="2" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Text="🔥 停机热态测量数据" />
+                            </DockPanel>
+
+                            <!--  热态 U-V  -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="105" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Foreground="#334155"
+                                    Text="热态 U-V (Ω):" />
+                                <TextBox
+                                    Grid.Column="1"
+                                    HorizontalContentAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Style="{StaticResource UnderlineTextBoxStyle}"
+                                    Text="{Binding TempRecord.HotRuv, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F5}}" />
+                                <Button
+                                    Grid.Column="3"
+                                    Height="36"
+                                    Command="{Binding SampleHotResistanceCommand}"
+                                    CommandParameter="UV"
+                                    Content="📥 采入"
+                                    Style="{StaticResource SampleBtnStyle}" />
+                            </Grid>
+
+                            <!--  热态 V-W  -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="105" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Foreground="#334155"
+                                    Text="热态 V-W (Ω):" />
+                                <TextBox
+                                    Grid.Column="1"
+                                    HorizontalContentAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Style="{StaticResource UnderlineTextBoxStyle}"
+                                    Text="{Binding TempRecord.HotRvw, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F5}}" />
+                                <Button
+                                    Grid.Column="3"
+                                    Height="36"
+                                    Command="{Binding SampleHotResistanceCommand}"
+                                    CommandParameter="VW"
+                                    Content="📥 采入"
+                                    Style="{StaticResource SampleBtnStyle}" />
+                            </Grid>
+
+                            <!--  热态 W-U  -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="105" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Foreground="#334155"
+                                    Text="热态 W-U (Ω):" />
+                                <TextBox
+                                    Grid.Column="1"
+                                    HorizontalContentAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Style="{StaticResource UnderlineTextBoxStyle}"
+                                    Text="{Binding TempRecord.HotRwu, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F5}}" />
+                                <Button
+                                    Grid.Column="3"
+                                    Height="36"
+                                    Command="{Binding SampleHotResistanceCommand}"
+                                    CommandParameter="WU"
+                                    Content="📥 采入"
+                                    Style="{StaticResource SampleBtnStyle}" />
+                            </Grid>
+
+                            <!-- 热态平均相电阻 R2 -->
+                            <Border Margin="0,16,0,0"
+                                    Padding="14,10" 
+                                    Background="White"
+                                    BorderBrush="White"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <DockPanel>
+                                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            FontWeight="Bold"
+                                            Foreground="#64748B"
+                                            Text="⚡ 折算热态相电阻 R2：" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="11"
+                                            Foreground="#64748B"
+                                            Text="(考核计算依据)" />          
+                                    </StackPanel>
+                                    <TextBlock
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Foreground="#334155"
+                                            Text="{Binding TempRecord.HotResistance, StringFormat={}{0:F5} Ω, FallbackValue='0.00000 Ω'}" />
+                                </DockPanel>
+                            </Border>
+                            
+                            <!--  停机环境温度与轴承最高温度  -->
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock
+                                        Margin="0,0,0,4"
+                                        FontSize="13"
+                                        FontWeight="Bold"
+                                        Foreground="#334155"
+                                        Text="停机室温 θ_amb (℃)" />
+                                    <TextBox
+                                        HorizontalContentAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="Bold"
+                                        Foreground="#0F172A"
+                                        Style="{StaticResource UnderlineTextBoxStyle}"
+                                        Text="{Binding TempRecord.ShutdownAmbientTemp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F1}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock
+                                        Margin="0,0,0,4"
+                                        FontSize="13"
+                                        FontWeight="Bold"
+                                        Foreground="#334155"
+                                        Text="轴承最高温 (℃)" />
+                                    <TextBox
+                                        HorizontalContentAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="Bold"
+                                        Foreground="#0F172A"
+                                        Style="{StaticResource UnderlineTextBoxStyle}"
+                                        Text="{Binding TempRecord.MaxBearingTemp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F1}}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  第 3 列卡片：温升核算与判定结论（醒目大字）  -->
+                    <Border
+                        Grid.Column="4"
+                        Padding="22"
+                        Background="White"
+                        CornerRadius="10"
+                        Effect="{StaticResource EffectShadow2}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,16">
+                                <Border
+                                    Width="5"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    Background="#16A34A"
+                                    CornerRadius="2" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Text="📊 温升核算与裁定" />
+                            </DockPanel>
+
+                            <!--  1. 绕组热态计算温度 θ2  -->
+                            <Border
+                                Margin="0,0,0,10"
+                                Padding="14,10"
+                                Background="#F8FAFC"
+                                BorderBrush="#CBD5E1"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                                <DockPanel>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        Foreground="#334155"
+                                        Text="绕组热态温度 θ2" />
+                                    <TextBlock
+                                        HorizontalAlignment="Right"
+                                        FontSize="22"
+                                        FontWeight="Bold"
+                                        Foreground="#0F172A"
+                                        Text="{Binding TempRecord.HotWindingTemp, StringFormat={}{0:F1} ℃}" />
+                                </DockPanel>
+                            </Border>
+
+                            <!--  2. 最终实际温升 Δθ  -->
+                            <Border
+                                Margin="0,0,0,12"
+                                Padding="14,10"
+                                Background="#EFF6FF"
+                                BorderBrush="#BFDBFE"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                                <DockPanel>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        FontWeight="Bold"
+                                        Foreground="#1E40AF"
+                                        Text="实际考核温升 Δθ" />
+                                    <TextBlock
+                                        HorizontalAlignment="Right"
+                                        FontSize="26"
+                                        FontWeight="Bold"
+                                        Foreground="#1D4ED8"
+                                        Text="{Binding TempRecord.TemperatureRise, StringFormat={}{0:F1} K}" />
+                                </DockPanel>
+                            </Border>
+
+                            <!--  3. 合格判定徽章（根据 IsQualified 自动切换红绿背景）  -->
+                            <Border
+                                Margin="0,0,0,14"
+                                Padding="16,12"
+                                CornerRadius="8">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#F1F5F9" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding TempRecord.IsQualified}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding TempRecord.IsQualified}" Value="False">
+                                                <Setter Property="Background" Value="#FEE2E2" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontSize="18"
+                                        FontWeight="Bold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="判定结果：待核算" />
+                                                <Setter Property="Foreground" Value="#64748B" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TempRecord.IsQualified}" Value="True">
+                                                        <Setter Property="Text" Value="✓ 判定结论：合格" />
+                                                        <Setter Property="Foreground" Value="#15803D" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TempRecord.IsQualified}" Value="False">
+                                                        <Setter Property="Text" Value="✗ 判定结论：不合格" />
+                                                        <Setter Property="Foreground" Value="#B91C1C" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock
+                                        Margin="0,4,0,0"
+                                        HorizontalAlignment="Center"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="#475569"
+                                        Text="{Binding TempRecord.AllowedBearingTemp, StringFormat='依据：Δθ ≤ 允许上限 且 轴承 ≤ {0:F0}℃'}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!--  4. 操作按钮组：立即核算 + 保存入库  -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="1.3*" />
+                                </Grid.ColumnDefinitions>
+                                <Button
+                                    Grid.Column="0"
+                                    Height="40"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Background="#E2E8F0"
+                                    Command="{Binding CalculateResultsCommand}"
+                                    Content="⚡ 立即核算"
+                                    FontSize="14"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A" />
+                                <Button
+                                    Grid.Column="2"
+                                    Height="40"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Command="{Binding SaveTestRecordCommand}"
+                                    Content="💾 保存试验数据"
+                                    FontSize="14"
+                                    FontWeight="Bold"
+                                    Style="{StaticResource ButtonPrimary}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <!-- 停机热态电阻冷却外推手工分析区 (左表右图)  -->
+                <Border
+                   Margin="0,15,0,20"
+                   Padding="22,18"
+                   Background="White"
+                   BorderBrush="#E2E8F0"
+                   BorderThickness="1"
+                   CornerRadius="10"
+                   SnapsToDevicePixels="True"
+                   TextOptions.TextFormattingMode="Display"
+                   TextOptions.TextRenderingMode="ClearType"
+                   UseLayoutRounding="True"
+                   Effect="{StaticResource EffectShadow2}">
+                    <StackPanel>
+                        <!-- 1. 顶部操作工具栏 -->
+                        <DockPanel Margin="0,0,0,16">
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <Border Width="5" Height="20" Margin="0,0,10,0" Background="#2563EB" CornerRadius="2" />
+                                <TextBlock VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Text="📉 停机热态电阻冷却外推分析 (GB/T 1032)" />
+                                <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#64748B" Text="现场停机打表后，点击【➕ 添加行】录入 2~4 组数据即可自动倒推" />
+                            </StackPanel>
+                            <!-- 右侧 3 个操作按钮 -->
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button
+                                    Height="36"
+                                    Margin="0,0,8,0"
+                                    Padding="14,0"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Background="#F1F5F9"
+                                    BorderThickness="0"
+                                    Command="{Binding AddManualCoolingPointCommand}"
+                                    Content="➕ 添加行"
+                                    Cursor="Hand"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="#334155" />
+                                <Button
+                                    Height="36"
+                                    Margin="0,0,8,0"
+                                    Padding="12,0"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Background="#F1F5F9"
+                                    BorderThickness="0"
+                                    Command="{Binding ClearManualCoolingPointsCommand}"
+                                    Content="🗑️ 清空"
+                                    Cursor="Hand"
+                                    FontSize="12"
+                                    Foreground="#EF4444" />
+                                <Button
+                                    Height="36"
+                                    Padding="16,0"
+                                    hc:BorderElement.CornerRadius="6"
+                                    Command="{Binding FitAndApplyCoolingResistanceCommand}"
+                                    Content="⚡ 绘制外推曲线并计算赋值"
+                                    Cursor="Hand"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Style="{StaticResource ButtonWarning}" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- 2. 中部主体：左表右图 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <!-- 左边表格 (40%) -->
+                                <ColumnDefinition Width="4*" />
+                                <ColumnDefinition Width="18" />
+                                <!-- 右边 ScottPlot 拟合画布 (60%) -->
+                                <ColumnDefinition Width="6*" />
+                            </Grid.ColumnDefinitions>
+                            <!-- 左侧：打点记录 DataGrid（直接双击单元格输入秒数和电阻） -->
+                            <DockPanel Grid.Column="0">
+                                <DataGrid
+                                    MaxHeight="480"
+                                    AutoGenerateColumns="False"
+                                    Background="White"
+                                    BorderBrush="#E2E8F0"
+                                    BorderThickness="1"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    CanUserReorderColumns="False"
+                                    CanUserResizeColumns="False"  
+                                    CanUserResizeRows="False"                                  
+                                    CanUserSortColumns="False"
+                                    GridLinesVisibility="Horizontal"
+                                    HeadersVisibility="Column"
+                                    HorizontalGridLinesBrush="#F1F5F9"
+                                    IsReadOnly="False"
+                                    ItemsSource="{Binding ManualCoolingPoints}">
+                                    <DataGrid.RowStyle>
+                                        <Style BasedOn="{StaticResource DataGridRowStyle}" TargetType="DataGridRow">
+                                            <Style.Triggers>
+                                                <!--  核心：当这一行被选中时，强制背景变为质感浅灰  -->
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E2E8F0" />
+                                                    <Setter Property="Foreground" Value="#0F172A" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+
+                                    <DataGrid.CellStyle>
+                                        <Style BasedOn="{StaticResource DataGridCellStyle}" TargetType="DataGridCell">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E2E8F0" />
+                                                    <Setter Property="Foreground" Value="#0F172A" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.CellStyle>
+                                    <!-- 🌟 核心：强制表头文字水平居中、背景浅灰、边框对齐 🌟 -->
+                                    <DataGrid.ColumnHeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Height" Value="36" />
+                                            <Setter Property="Background" Value="#F8FAFC" />
+                                            <Setter Property="Foreground" Value="#334155" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="FontSize" Value="13" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                            <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                            <Setter Property="BorderBrush" Value="#E2E8F0" />
+                                        </Style>
+                                    </DataGrid.ColumnHeaderStyle>
+                                    <DataGrid.Columns>
+                                        <!-- 序号：固定宽度 70 -->
+                                        <DataGridTextColumn Width="70" Binding="{Binding Index}" Header="序号" IsReadOnly="True" ElementStyle="{StaticResource CenterTextBlock}" />
+
+                                        <!-- 停机秒数：给固定宽度 150，表头与数据全部居中 -->
+                                        <DataGridTextColumn Width="150" Binding="{Binding Seconds}" Header="停机时间 t (s)" ElementStyle="{StaticResource CenterTextBlock}" />
+
+                                        <!-- 实测电阻：给固定宽度 180，表头与数据全部居中 -->
+                                        <DataGridTextColumn Width="180" Binding="{Binding Resistance, StringFormat={}{0:F5}}" Header="实测电阻 R (Ω)" ElementStyle="{StaticResource BoldCenterTextBlock}" />
+
+                                        <!-- 操作列：居中放置删除按钮 -->
+                                        <DataGridTemplateColumn Width="*" Header="操作">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button
+                                                        Height="24"
+                                                        Padding="10,0"
+                                                        HorizontalAlignment="Center"
+                                                        hc:BorderElement.CornerRadius="4"
+                                                        Command="{Binding DataContext.DeleteManualCoolingPointCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="删除"
+                                                        FontSize="11"
+                                                        Foreground="#DC2626"
+                                                        Style="{StaticResource ButtonDashedDanger}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DockPanel>
+                            <!-- 右侧：ScottPlot 倒推拟合回归画布 -->
+                            <Border Grid.Column="2" Padding="14" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8">
+                                <DockPanel>
+                                    <!-- ScottPlot 图表控件 -->
+                                    <sp:WpfPlot x:Name="CoolingPlot" MinHeight="420" />
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+
+                    </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>

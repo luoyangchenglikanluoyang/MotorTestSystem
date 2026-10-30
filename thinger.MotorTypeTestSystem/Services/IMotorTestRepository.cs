@@ -27,5 +27,11 @@ namespace thinger.MotorTypeTestSystem.Services
         Task<bool> SaveDcResistanceAsync(DcResistanceRecord record);
         // 2. 根据主表流水号获取直流电阻数据（如果之前测过，一进页面就能自动回显数据）
         Task<DcResistanceRecord?> GetDcResistanceByRecordIdAsync(string recordId);
+
+        // 🌟 1. 保存/更新温升试验数据
+        Task<bool> SaveTemperatureRiseAsync(TemperatureRiseRecord record);
+        // 🌟 2. 根据主表流水号获取温升试验数据（进入页面自动回显）
+        Task<TemperatureRiseRecord?> GetTemperatureRiseByRecordIdAsync(string recordId);
+
     }
 }

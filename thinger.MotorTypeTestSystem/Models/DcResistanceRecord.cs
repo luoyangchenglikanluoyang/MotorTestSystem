@@ -52,6 +52,9 @@ namespace thinger.MotorTypeTestSystem.Models
         [ObservableProperty]
         private double _averageResistance;
 
+
+        
+
         /// <summary>
         /// 三相电阻不平衡度 (%)
         /// </summary>

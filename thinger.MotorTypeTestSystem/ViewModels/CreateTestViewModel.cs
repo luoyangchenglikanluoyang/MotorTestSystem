@@ -206,7 +206,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
 
         public ObservableCollection<string> StandardList { get; } = new ObservableCollection<string>
         {
-            "GB/T 1032-2012 三相异步电动机试验方法",
+            "GB/T 1032-2023 三相异步电动机试验方法",
             "GB/T 1029-2005 三相同步电机试验方法",
             "IEC 60034-2-1:2014 旋转电机试验方法"
         };

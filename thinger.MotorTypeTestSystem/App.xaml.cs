@@ -95,7 +95,8 @@ namespace thinger.MotorTypeTestSystem
             containerRegistry.RegisterSingleton<IDeviceManagerService, DeviceManagerService>();
             containerRegistry.RegisterSingleton<IHardwareManagerService, HardwareManagerService>();
             containerRegistry.RegisterSingleton<IMotorTestRepository, MotorTestRepository>();
-            containerRegistry.RegisterSingleton<ITempChannelService, TempChannelService>();
+            containerRegistry.RegisterSingleton<ITempChannelService, TempChannelService>();           
+            containerRegistry.RegisterSingleton<IResistanceMeterService, ResistanceMeterService>();// 注册微欧计通用采集服务为单例
 
             // 2. 注册核心功能页面 (Prism Navigation)
             containerRegistry.RegisterForNavigation<HardwareConfigView, HardwareConfigViewModel>();
