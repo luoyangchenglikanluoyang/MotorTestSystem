@@ -232,6 +232,7 @@
                                 <CheckBox
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
+                                    Click="ChkAmbient_Click"
                                     IsChecked="{Binding IsAmbient, UpdateSourceTrigger=PropertyChanged}"
                                     ToolTip="勾选作为计算温升的环境参考基准温度" />
                             </DataTemplate>

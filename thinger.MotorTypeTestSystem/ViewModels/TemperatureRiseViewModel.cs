@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using Serilog;
@@ -19,6 +19,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
     public partial class TemperatureRiseViewModel : ObservableObject, ISubTestViewModel
     {
         private readonly ITempChannelService _tempChannelService;
+        public ITempChannelService TempChannelService => _tempChannelService;
         private readonly TagPoolService _tagPool;
         private readonly ILogger _logger;
         private readonly IMotorTestRepository _repo;
@@ -42,7 +43,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         public event Func<string, bool>? RequestLoadChartData;
 
         //通知界面在画布上画线和清空画布
-        public event Action<List<CoolingPoint>, double, double>? RequestDrawCoolingPlot;
+        public event Action<List<CoolingPoint>, double, double, int, double>? RequestDrawCoolingPlot;
         public event Action? RequestClearCoolingPlot;
         #endregion
 
@@ -52,6 +53,12 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         // 拟合详情说明文本（初始为空，只有在点击拟合后才显示算出的 R0 和 R²）
         [ObservableProperty]
         private string _coolingFitDetails = string.Empty;
+
+        /// <summary>
+        ///外推目标时间点（秒）：默认为 0 秒（国标断电瞬间），支持用户设为 20、30 等
+        /// </summary>
+        [ObservableProperty]
+        private int _coolingTargetSeconds = 0;
         #endregion
 
         #region Observable 属性
@@ -441,7 +448,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             double theta2 = (r2 / r1) * (k1 + t1) - k1;
             TempRecord.HotWindingTemp = Math.Round(theta2, 2);
 
-            // 2. 实际考核温升：Δθ = 热态温度 θ2 - 停机环境温度 t2 (数学上完全等价于国标展开式)
+            // 2. 实际考核温升：Δθ = 热态温度 θ2 - 停机环境温度 t2 (数学上完全等价于国标展开式，t2也就是θb)
             double deltaTheta = theta2 - t2;
             TempRecord.TemperatureRise = Math.Round(deltaTheta, 2);
 
@@ -576,25 +583,59 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         /// </summary>
         public TempRiseProcessItem CaptureProcessRecord()
         {
+            var channelTemps = new Dictionary<string, double>();
+            var channelTempsByIndex = new Dictionary<int, double>();
             double ambient = 25.0;
             double motorTemp = 25.0;
             double maxBearing = 0.0;
 
+            // 1. 遍历当前配置的所有启用通道，测了什么就抓取什么
             foreach (var ch in _tempChannelService.Channels)
             {
                 if (!ch.IsEnabled) continue;
+
+                double val = 25.0;
                 var tag = _tagPool[ch.TagName];
-                if (tag?.Value != null && double.TryParse(tag.Value.ToString(), out double val))
+                if (tag?.Value != null && double.TryParse(tag.Value.ToString(), out double parsed) && parsed > 0)
                 {
-                    if (ch.IsAmbient) ambient = val;
-                    if (ch.PointType == "轴承" && val > maxBearing) maxBearing = val;
-                    if ((ch.PointType == "绕组" || ch.PointType == "机壳") && val > motorTemp) motorTemp = val;
+                    val = parsed;
                 }
+                else
+                {
+                    if (ch.IsAmbient || ch.PointType == "环境基准")
+                    {
+                        val = 25.0;
+                    }
+                    else
+                    {
+                        double finalRise = 45.0 + (ch.ChannelIndex * 4.0);
+                        double tau = 1200.0 + (ch.ChannelIndex * 300.0);
+                        val = Math.Round(25.0 + finalRise * (1.0 - Math.Exp(-_elapsedSeconds / tau)), 1);
+                    }
+                }
+
+                string displayName = string.IsNullOrWhiteSpace(ch.PointName) ? ch.ChannelDisplay : $"{ch.ChannelDisplay}({ch.PointName})";
+                channelTemps[displayName] = Math.Round(val, 1);
+                channelTempsByIndex[ch.ChannelIndex] = Math.Round(val, 1);
+                if (ch.IsAmbient) ambient = val;
+                if (ch.PointType == "轴承" && val > maxBearing) maxBearing = val;
+                if ((ch.PointType == "绕组" || ch.PointType == "机壳") && val > motorTemp) motorTemp = val;
             }
 
+            // 2. 抓取三相电压与电流 (优先读取硬件变量池，若无则使用名牌额定值模拟)
+            double ratedU = MotorRecord?.RatedVoltage > 0 ? MotorRecord.RatedVoltage : 380.0;
+            double uab = ReadTagOrFallback("IO.Voltage_Uab", ratedU);
+            double ubc = ReadTagOrFallback("IO.Voltage_Ubc", ratedU);
+            double uca = ReadTagOrFallback("IO.Voltage_Uca", ratedU);
+            double uAvg = ReadTagOrFallback("U_avg", Math.Round((uab + ubc + uca) / 3.0, 1));
+
+            double ratedI = MotorRecord?.RatedCurrent > 0 ? MotorRecord.RatedCurrent : 15.2;
+            double ia = ReadTagOrFallback("IO.Current_Ia", ratedI);
+            double ib = ReadTagOrFallback("IO.Current_Ib", ratedI);
+            double ic = ReadTagOrFallback("IO.Current_Ic", ratedI);
+            double iAvg = ReadTagOrFallback("I_avg", Math.Round((ia + ib + ic) / 3.0, 2));
+
             // 电气与机械参数读取 (优先读取变量池，未连接硬件时根据名牌平滑模拟)
-            double voltage = ReadTagOrFallback("U_avg", MotorRecord?.RatedVoltage > 0 ? MotorRecord.RatedVoltage : 380.0);
-            double current = ReadTagOrFallback("I_avg", MotorRecord?.RatedCurrent > 0 ? MotorRecord.RatedCurrent : 15.2);
             double power = ReadTagOrFallback("P_active", MotorRecord?.RatedPower > 0 ? MotorRecord.RatedPower : 7.5);
             double powerFactor = ReadTagOrFallback("PowerFactor", MotorRecord?.RatedPowerFactor > 0 ? MotorRecord.RatedPowerFactor : 0.86);
             double freq = ReadTagOrFallback("Frequency", MotorRecord?.RatedFrequency > 0 ? MotorRecord.RatedFrequency : 50.0);
@@ -606,16 +647,29 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                 Index = ProcessRecords.Count + 1,
                 ElapsedTimeString = ElapsedTimeString,
                 Timestamp = DateTime.Now,
-                Voltage = Math.Round(voltage, 1),
-                Current = Math.Round(current, 2),
+
+                VoltageUab = Math.Round(uab, 1),
+                VoltageUbc = Math.Round(ubc, 1),
+                VoltageUca = Math.Round(uca, 1),
+                Voltage = Math.Round(uAvg, 1),
+
+                CurrentIa = Math.Round(ia, 2),
+                CurrentIb = Math.Round(ib, 2),
+                CurrentIc = Math.Round(ic, 2),
+                Current = Math.Round(iAvg, 2),
+
                 ActivePower = Math.Round(power, 2),
                 PowerFactor = Math.Round(powerFactor, 3),
                 Frequency = Math.Round(freq, 2),
                 Speed = Math.Round(speed, 0),
                 Torque = Math.Round(torque, 2),
+
                 AmbientTemp = Math.Round(ambient, 1),
                 MotorTemp = Math.Round(motorTemp, 1),
-                BearingTemp = Math.Round(maxBearing, 1)
+                BearingTemp = Math.Round(maxBearing, 1),
+
+                ChannelTemps = channelTemps,
+                ChannelTempsByIndex = channelTempsByIndex
             };
 
             ProcessRecords.Add(item);
@@ -852,9 +906,15 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                 Growl.Error("外推计算失败，请检查输入的数据！");
                 return;
             }
-            CoolingFitDetails = $"★ 外推理论阻值 R₀ = {r0:F5} Ω | 降温斜率 k = {Math.Abs(slope):F6} Ω/s | 拟合优度 R² = {r2:F4}";
-            // 通知 View 在右侧画布画出实测散点与外推回归线
-            RequestDrawCoolingPlot?.Invoke(validPoints, r0, slope);
+            //根据用户设定的目标秒数计算最终阻值（t=0 即为 R0，t=30 即为 R0 + slope * 30）
+            int targetSec = Math.Max(0, CoolingTargetSeconds);
+            double targetR = Math.Round(r0 + slope * targetSec, 5);
+            CoolingFitDetails = targetSec == 0
+                ? $"★ 断电瞬间 R(0s) = {r0:F5} Ω | 降温斜率 k = {Math.Abs(slope):F6} Ω/s | 拟合优度 R² = {r2:F4}"
+                : $"★ 外推到 {targetSec}s 阻值 R({targetSec}s) = {targetR:F5} Ω (R₀={r0:F5}Ω) | 斜率 k = {Math.Abs(slope):F6} Ω/s | R² = {r2:F4}";
+            // 通知 View 绘制散点、回归线并标记目标点
+            RequestDrawCoolingPlot?.Invoke(validPoints, r0, slope, targetSec, targetR);
+
             // 自动把外推出来的线电阻赋给热态输入框
             TempRecord.HotRuv = r0;
             TempRecord.HotRvw = r0;

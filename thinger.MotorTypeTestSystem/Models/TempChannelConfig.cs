@@ -47,7 +47,7 @@ namespace thinger.MotorTypeTestSystem.Models
         private string _pointType = "常规测点";
 
         /// <summary>
-        /// 是否作为计算温升的环境基准温度(这个通道测的是环境空气，它不属于受试电机的部件！)
+        /// 是否作为计算温升的环境/冷却介质(温升试验计算Δθ=θ2​−θb时，要做为θb)
         /// </summary>
         [ObservableProperty]
         private bool _isAmbient = false;

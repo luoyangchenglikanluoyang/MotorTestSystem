@@ -35,7 +35,7 @@ namespace thinger.MotorTypeTestSystem.Services
         }
 
         /// <summary>
-        /// 连接Com口 (获取服务并增加使用人数)强占有时用这个
+        /// 连接Com口 (获取服务并增加使用人数)强占有时用这个(比如)
         /// </summary>
         public static object GetService(DeviceConfig config)
         {

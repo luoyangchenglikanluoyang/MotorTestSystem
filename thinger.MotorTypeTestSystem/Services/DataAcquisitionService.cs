@@ -21,7 +21,7 @@ namespace thinger.MotorTypeTestSystem.Services
         private readonly IDeviceManagerService _deviceManager;//接受注入的设备接口
         private readonly TagPoolService _tagPool;//接受全局变量池
         private readonly ILogger _logger;
-        
+
         private List<ModbusGroupConfig> _groups = new();//json文件解析设备的数据点位
         private CancellationTokenSource _cts;//取消令牌的源
 
@@ -33,6 +33,10 @@ namespace thinger.MotorTypeTestSystem.Services
             LoadConfig();
         }
 
+        #region 加载点表配置（反序列化json文件）
+        /// <summary>
+        /// 加载点表配置
+        /// </summary>
         private void LoadConfig()
         {
             try
@@ -52,107 +56,195 @@ namespace thinger.MotorTypeTestSystem.Services
                 _logger.Error(ex, "加载 tags.json 失败");
             }
         }
+        #endregion
 
+        #region 启动数据采集
         public void Start()
         {
             if (_cts != null) return;
             _cts = new CancellationTokenSource();
-            
-            // 开启后台独立线程，死循环采集
-            Task.Run(() => PollingLoop(_cts.Token));
-            _logger.Information("数据采集引擎已启动");
-        }
 
+            var channelGroups = _groups.GroupBy(g =>
+            {
+                var dev = _deviceManager.DeviceConfigs.Find(d => d.DeviceId == g.DeviceId);
+                if (dev == null) return "UNKNOWN";
+                // 网口按 IP:Port 分组，串口按 COM口 分组
+                return dev.CommType == CommunicationType.ModbusTCP
+                    ? $"TCP_{dev.IpAddress}:{dev.Port}"
+                    : $"RTU_{dev.ComPort}";
+            })
+            .Where(g => g.Key != "UNKNOWN");//过滤掉刚才没找到设备的那些通道组
+            // 2. 为每个物理端口启动一个独立的后台任务（互不干扰、永不卡死）
+            foreach (var channelGroup in channelGroups)
+            {
+                string channelKey = channelGroup.Key;
+                var groupList = channelGroup.ToList();
+                Task.Run(() => PollingChannelLoop(channelKey, groupList, _cts.Token));
+                _logger.Information($"已为物理链路 [{channelKey}] 启动独立采集任务，包含 {groupList.Count} 个点位组。");
+            }
+            _logger.Information("多通道并发数据采集引擎已全部启动！");
+        }
+        #endregion
+
+        #region 关闭数据采集
         public void Stop()
         {
             _cts?.Cancel();
             _cts = null;
             _logger.Information("数据采集引擎已停止");
         }
+        #endregion
 
-        private async Task PollingLoop(CancellationToken ct)
+
+        /// <summary>
+        /// 专属物理链路的采集循环 (不同端口完全并行，相同端口内部排队)
+        /// </summary>
+        private async Task PollingChannelLoop(string channelKey, List<ModbusGroupConfig> channelGroups, CancellationToken ct)
         {
+            // 快慢分离：巡检仪 1000ms，PLC 200ms 极速，其他默认 500ms
+            int loopDelay = 500;
+            if (channelKey.Contains("COM4")) loopDelay = 1000; // 温度巡检仪 1秒一次
+            if (channelKey.Contains("COM1")) loopDelay = 200;  // 主控 PLC 100ms 高频刷新
+
             try
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    foreach (var group in _groups)
+                    foreach (var group in channelGroups)
                     {
-                        // 1. 根据 DeviceId 找到底层的设备配置
                         var deviceConfig = _deviceManager.DeviceConfigs.Find(d => d.DeviceId == group.DeviceId);
                         if (deviceConfig == null) continue;
 
                         try
                         {
-                            // 2. 从全局管家拿到modbusRTU或者modbusTCP的Service服务 (不增加 UserCount)
                             object service = ConnectionManager.PeekService(deviceConfig);
-                            if (service == null) continue; // 如果前台还没连上，这里就是 null，直接跳过等下一轮
+                            if (service == null) continue;
 
-                            // 3. 判断并发送成块读取指令
+                            // 1. Modbus TCP 处理
                             if (service is ModbusTCPService tcp && tcp.IsConnected)
                             {
-                                if (group.FunctionCode == 1)
-                                {
-                                    bool[] boolData = await tcp.ReadCoilsAsync(group.StartAddress, group.Length, ct);
-                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
-                                }
-                                else if (group.FunctionCode == 2)
-                                {
-                                    bool[] boolData = await tcp.ReadDiscreteInputsAsync(group.StartAddress, group.Length, ct);
-                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
-                                }
-                                else if (group.FunctionCode == 3)
+                                if (group.FunctionCode == 3)
                                 {
                                     ushort[] rawData = await tcp.ReadHoldingRegistersAsync(group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length) ParseGroupData(group, rawData, service);
+                                    if (rawData != null && rawData.Length >= group.Length)
+                                    {
+                                        ParseGroupData(group, rawData, service);
+                                        ComputeDerivedTags(); // 🌟 刚采完该组，立刻就地计算！
+                                    }
                                 }
                                 else if (group.FunctionCode == 4)
                                 {
                                     ushort[] rawData = await tcp.ReadInputRegistersAsync(group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length) ParseGroupData(group, rawData, service);
+                                    if (rawData != null && rawData.Length >= group.Length)
+                                    {
+                                        ParseGroupData(group, rawData, service);
+                                        ComputeDerivedTags();
+                                    }
+                                }
+                                else if (group.FunctionCode == 1 || group.FunctionCode == 2)
+                                {
+                                    bool[] boolData = await tcp.ReadCoilsAsync(group.StartAddress, group.Length, ct);
+                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
                                 }
                             }
+                            // 2. Modbus RTU 处理
                             else if (service is ModbusRTUService rtu && rtu.IsConnected)
                             {
-                                if (group.FunctionCode == 1)
-                                {
-                                    bool[] boolData = await rtu.ReadCoilsAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
-                                }
-                                else if (group.FunctionCode == 2)
-                                {
-                                    bool[] boolData = await rtu.ReadDiscreteInputsAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
-                                }
-                                else if (group.FunctionCode == 3)
+                                if (group.FunctionCode == 3)
                                 {
                                     ushort[] rawData = await rtu.ReadHoldingRegistersAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length) ParseGroupData(group, rawData, service);
+                                    if (rawData != null && rawData.Length >= group.Length)
+                                    {
+                                        ParseGroupData(group, rawData, service);
+                                        ComputeDerivedTags(); // 🌟 刚采完该组，立刻就地计算！
+                                    }
                                 }
                                 else if (group.FunctionCode == 4)
                                 {
                                     ushort[] rawData = await rtu.ReadInputRegistersAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length) ParseGroupData(group, rawData, service);
+                                    if (rawData != null && rawData.Length >= group.Length)
+                                    {
+                                        ParseGroupData(group, rawData, service);
+                                        ComputeDerivedTags();
+                                    }
+                                }
+                                else if (group.FunctionCode == 1 || group.FunctionCode == 2)
+                                {
+                                    bool[] boolData = await rtu.ReadCoilsAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
+                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            // 如果断线，底层的通讯库会抛出异常。
-                            // 我们在这里安静地捕获，这轮就不切蛋糕了，等下一轮重试。
-                            _logger.Debug($"读取组 {group.GroupName} 失败: {ex.Message}");
+                            _logger.Debug($"链路 [{channelKey}] 读取设备 {group.DeviceId} 失败: {ex.Message}");
                         }
                     }
 
-                    // 休息 500ms 继续下一轮 (这就是轮询周期，可以根据需要改快点或慢点)
-                    await Task.Delay(500, ct);
+                    // 属于当前物理链路的自主休息间隔
+                    await Task.Delay(loopDelay, ct);
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) { }
+        }
+
+        #region 自动计算“虚拟/派生测点”，并持续刷新存入全局变量池
+        /// <summary>
+        /// 自动计算“虚拟/派生测点”，并持续刷新存入全局变量池
+        /// </summary>
+        /// <summary>
+        /// 硬件数据刚写入变量池的一瞬间，立刻就地执行派生公式刷新
+        /// </summary>
+        private void ComputeDerivedTags()
+        {
+            try
             {
-                // 正常取消，吞掉异常，防止后台任务报错
+                // -------------------------------------------------------------
+                // 1. 三相平均电压 U_avg (V) 与 平均电流 I_avg (A)
+                // -------------------------------------------------------------
+                double uab = _tagPool.GetValue<float>("IO.Voltage_Uab");
+                double ubc = _tagPool.GetValue<float>("IO.Voltage_Ubc");
+                double uca = _tagPool.GetValue<float>("IO.Voltage_Uca");
+                if (uab > 0 || ubc > 0 || uca > 0)
+                {
+                    _tagPool.SetValue("U_avg", Math.Round((uab + ubc + uca) / 3.0, 1));
+                }
+
+                double ia = _tagPool.GetValue<float>("IO.Current_Ia");
+                double ib = _tagPool.GetValue<float>("IO.Current_Ib");
+                double ic = _tagPool.GetValue<float>("IO.Current_Ic");
+                if (ia > 0 || ib > 0 || ic > 0)
+                {
+                    _tagPool.SetValue("I_avg", Math.Round((ia + ib + ic) / 3.0, 2));
+                }
+
+                // -------------------------------------------------------------
+                // 2. 机械输出功率 P2 (kW)：P2 = (转矩 T * 转速 n) / 9550
+                // -------------------------------------------------------------
+                double speed = _tagPool.GetValue<ushort>("IO.PLC_Speed");
+                double torque = _tagPool.GetValue<float>("IO.PLC_Torque");
+                if (speed > 0 && torque > 0)
+                {
+                    double p2 = Math.Round((torque * speed) / 9550.0, 2);
+                    _tagPool.SetValue("P2_Output", p2);
+                }
+
+                // -------------------------------------------------------------
+                // 3. 实时运行效率 η (%)：η = (P2 / P1) * 100
+                // -------------------------------------------------------------
+                double p1 = _tagPool.GetValue<float>("P_active");
+                double currentP2 = _tagPool.GetValue<double>("P2_Output");
+                if (p1 > 0 && currentP2 > 0)
+                {
+                    _tagPool.SetValue("Motor_Efficiency", Math.Round((currentP2 / p1) * 100.0, 1));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"就地计算派生数据异常: {ex.Message}");
             }
         }
+        #endregion
 
         private void ParseGroupData(ModbusGroupConfig group, ushort[] rawData, object service)
         {
@@ -168,7 +260,7 @@ namespace thinger.MotorTypeTestSystem.Services
 
                     // 调用通讯库里自带的拼接方法 (复用你写的底层代码)
                     float val = 0;
-                    if (service is ModbusTCPService tcp) 
+                    if (service is ModbusTCPService tcp)
                     {
                         var tcpOrder = currentOrder switch
                         {
@@ -179,7 +271,7 @@ namespace thinger.MotorTypeTestSystem.Services
                         };
                         val = tcp.RegistersToFloat(rawData, tag.Offset, tcpOrder);
                     }
-                    else if (service is ModbusRTUService rtu) 
+                    else if (service is ModbusRTUService rtu)
                     {
                         var rtuOrder = currentOrder switch
                         {
@@ -190,7 +282,7 @@ namespace thinger.MotorTypeTestSystem.Services
                         };
                         val = rtu.RegistersToFloat(rawData, tag.Offset, rtuOrder);
                     }
-                    
+
                     _tagPool.SetValue(tag.TagName, val);
                 }
                 else if (tag.DataType == "UShort")

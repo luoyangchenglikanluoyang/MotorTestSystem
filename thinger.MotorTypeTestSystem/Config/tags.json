@@ -32,7 +32,7 @@
     "Length": 20,
     "Tags": [
       {
-        "TagName": "IO.Voltage_U",
+        "TagName": "IO.Voltage_Uab",
         "Offset": 0,
         "BitIndex": null,
         "ByteOrder": "BigEndian",
@@ -40,7 +40,15 @@
         "DataType": "Float"
       },
       {
-        "TagName": "IO.Current_U",
+        "TagName": "IO.Voltage_Ubc",
+        "Offset": 2,
+        "BitIndex": null,
+        "ByteOrder": "BigEndian",
+        "CustomMethod": null,
+        "DataType": "Float"
+      },
+      {
+        "TagName": "IO.Voltage_Uac",
         "Offset": 2,
         "BitIndex": null,
         "ByteOrder": "BigEndian",

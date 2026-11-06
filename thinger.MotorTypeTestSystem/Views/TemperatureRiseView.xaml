@@ -1,4 +1,4 @@
-<UserControl
+﻿<UserControl
     x:Class="thinger.MotorTypeTestSystem.Views.TemperatureRiseView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -207,29 +207,29 @@
                                 Style="{StaticResource ButtonPrimary}" />
 
                             <Button
-    Height="38"
-    Margin="0,0,8,0"
-    Padding="14,0"
-    hc:BorderElement.CornerRadius="6"
-    Command="{Binding TogglePauseCommand}"
-    Cursor="Hand"
-    FontSize="13"
-    FontWeight="Bold">
+                                Height="38"
+                                Margin="0,0,8,0"
+                                Padding="14,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Command="{Binding TogglePauseCommand}"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="Bold">
                                 <Button.Style>
                                     <Style TargetType="Button">
-                                        <!-- 默认未试验状态：浅灰禁用 -->
+                                        <!--  默认未试验状态：浅灰禁用  -->
                                         <Setter Property="Content" Value="⏸ 暂停试验" />
                                         <Setter Property="Background" Value="#F59E0B" />
                                         <Setter Property="Foreground" Value="White" />
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="IsEnabled" Value="{Binding IsTesting}" />
                                         <Style.Triggers>
-                                            <!-- 当 IsTesting 为 False 时变灰禁用 -->
+                                            <!--  当 IsTesting 为 False 时变灰禁用  -->
                                             <Trigger Property="IsEnabled" Value="False">
                                                 <Setter Property="Background" Value="#E2E8F0" />
                                                 <Setter Property="Foreground" Value="#94A3B8" />
                                             </Trigger>
-                                            <!-- 当处于暂停状态时：切换为清新亮绿的【继续试验】 -->
+                                            <!--  当处于暂停状态时：切换为清新亮绿的【继续试验】  -->
                                             <DataTrigger Binding="{Binding IsPaused}" Value="True">
                                                 <Setter Property="Content" Value="▶ 继续试验" />
                                                 <Setter Property="Background" Value="#059669" />
@@ -366,7 +366,9 @@
                         </DockPanel>
 
                         <!--  过程工况记录 DataGrid (深度优化清晰高对比度行选中、反选交互及单行删除)  -->
+                        <!--  过程工况记录 DataGrid (三相电量 + 动态多通道温度列 + 深度优化行交互)  -->
                         <DataGrid
+                            x:Name="ProcessDataGrid"
                             MaxHeight="280"
                             AutoGenerateColumns="False"
                             Background="White"
@@ -381,10 +383,10 @@
                             ItemsSource="{Binding ProcessRecords}"
                             PreviewMouseDown="ProcessDataGrid_PreviewMouseDown"
                             RowHeaderWidth="0"
-                            SelectionMode="Single"
-                            SelectionUnit="FullRow"
                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            SelectionMode="Single"
+                            SelectionUnit="FullRow">
                             <DataGrid.Resources>
                                 <!--  选中行高亮柔和浅蓝背景，确保深色文字清晰易读  -->
                                 <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#E0F2FE" />
@@ -450,58 +452,85 @@
                                     Binding="{Binding TimeString}"
                                     ElementStyle="{StaticResource CenterTextBlock}"
                                     Header="记录时间" />
+
+                                <!--  三相电压分量与平均值  -->
                                 <DataGridTextColumn
-                                    Width="95"
+                                    Width="75"
+                                    Binding="{Binding VoltageUab, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="Uab (V)" />
+                                <DataGridTextColumn
+                                    Width="75"
+                                    Binding="{Binding VoltageUbc, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="Ubc (V)" />
+                                <DataGridTextColumn
+                                    Width="75"
+                                    Binding="{Binding VoltageUca, StringFormat={}{0:F1}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="Uca (V)" />
+                                <DataGridTextColumn
+                                    Width="88"
                                     Binding="{Binding Voltage, StringFormat={}{0:F1}}"
-                                    ElementStyle="{StaticResource CenterTextBlock}"
-                                    Header="电压 U (V)" />
+                                    ElementStyle="{StaticResource BoldCenterTextBlock}"
+                                    Header="平均 U (V)" />
+
+                                <!--  三相电流分量与平均值  -->
                                 <DataGridTextColumn
-                                    Width="95"
+                                    Width="75"
+                                    Binding="{Binding CurrentIa, StringFormat={}{0:F2}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="Ia (A)" />
+                                <DataGridTextColumn
+                                    Width="75"
+                                    Binding="{Binding CurrentIb, StringFormat={}{0:F2}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="Ib (A)" />
+                                <DataGridTextColumn
+                                    Width="75"
+                                    Binding="{Binding CurrentIc, StringFormat={}{0:F2}}"
+                                    ElementStyle="{StaticResource CenterTextBlock}"
+                                    Header="Ic (A)" />
+                                <DataGridTextColumn
+                                    Width="88"
                                     Binding="{Binding Current, StringFormat={}{0:F2}}"
-                                    ElementStyle="{StaticResource CenterTextBlock}"
-                                    Header="电流 I (A)" />
+                                    ElementStyle="{StaticResource BoldCenterTextBlock}"
+                                    Header="平均 I (A)" />
+
+                                <!--  功率与网参  -->
                                 <DataGridTextColumn
-                                    Width="140"
+                                    Width="125"
                                     Binding="{Binding ActivePower, StringFormat={}{0:F2}}"
                                     ElementStyle="{StaticResource CenterTextBlock}"
                                     Header="输入功率 P1 (kW)" />
                                 <DataGridTextColumn
-                                    Width="85"
+                                    Width="80"
                                     Binding="{Binding Frequency, StringFormat={}{0:F2}}"
                                     ElementStyle="{StaticResource CenterTextBlock}"
                                     Header="频率 (Hz)" />
                                 <DataGridTextColumn
-                                    Width="85"
+                                    Width="80"
                                     Binding="{Binding PowerFactor, StringFormat={}{0:F3}}"
                                     ElementStyle="{StaticResource CenterTextBlock}"
                                     Header="功率因数" />
+
+                                <!--  机械参数  -->
                                 <DataGridTextColumn
-                                    Width="95"
+                                    Width="90"
                                     Binding="{Binding Speed, StringFormat={}{0:F0}}"
                                     ElementStyle="{StaticResource CenterTextBlock}"
                                     Header="转速 (r/min)" />
                                 <DataGridTextColumn
-                                    Width="95"
+                                    Width="90"
                                     Binding="{Binding Torque, StringFormat={}{0:F1}}"
                                     ElementStyle="{StaticResource CenterTextBlock}"
                                     Header="转矩 (N·m)" />
-                                <DataGridTextColumn
-                                    Width="110"
-                                    Binding="{Binding MotorTemp, StringFormat={}{0:F1}}"
-                                    ElementStyle="{StaticResource HighlightRedTextBlock}"
-                                    Header="绕组/机壳 (℃)" />
-                                <DataGridTextColumn
-                                    Width="105"
-                                    Binding="{Binding BearingTemp, StringFormat={}{0:F1}}"
-                                    ElementStyle="{StaticResource CenterTextBlock}"
-                                    Header="轴承最高 (℃)" />
-                                <DataGridTextColumn
-                                    Width="105"
-                                    Binding="{Binding AmbientTemp, StringFormat={}{0:F1}}"
-                                    ElementStyle="{StaticResource CenterTextBlock}"
-                                    Header="环境温度 (℃)" />
-                                <!--  🌟 操作列：单行删除按钮  -->
-                                <DataGridTemplateColumn Width="90" Header="操作">
+
+                                <!--  🌟 操作列：单行删除按钮 (动态温度通道列由后台自动按顺序插入在此列之前)  -->
+                                <DataGridTemplateColumn
+                                    x:Name="ColOperation"
+                                    Width="80"
+                                    Header="操作">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button
@@ -644,15 +673,15 @@
                                 Foreground="#0F172A"
                                 Style="{StaticResource UnderlineTextBoxStyle}"
                                 Text="{Binding TempRecord.AllowedTempRise, UpdateSourceTrigger=LostFocus, StringFormat={}{0:F1}}" />
-                            
+
                             <!--  5. 允许允许轴承最高温度限值 (℃)  -->
-                                <TextBlock
+                            <TextBlock
                                 Margin="0,16,0,6"
                                 FontSize="13"
                                 FontWeight="Bold"
                                 Foreground="#334155"
                                 Text="允许轴承温度限值 (℃)" />
-                                <TextBox
+                            <TextBox
                                 HorizontalContentAlignment="Center"
                                 FontSize="16"
                                 FontWeight="Bold"
@@ -778,13 +807,14 @@
                                     Style="{StaticResource SampleBtnStyle}" />
                             </Grid>
 
-                            <!-- 热态平均相电阻 R2 -->
-                            <Border Margin="0,16,0,0"
-                                    Padding="14,10" 
-                                    Background="White"
-                                    BorderBrush="White"
-                                    BorderThickness="1"
-                                    CornerRadius="6">
+                            <!--  热态平均相电阻 R2  -->
+                            <Border
+                                Margin="0,16,0,0"
+                                Padding="14,10"
+                                Background="White"
+                                BorderBrush="White"
+                                BorderThickness="1"
+                                CornerRadius="6">
                                 <DockPanel>
                                     <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                         <TextBlock
@@ -797,18 +827,18 @@
                                             VerticalAlignment="Center"
                                             FontSize="11"
                                             Foreground="#64748B"
-                                            Text="(考核计算依据)" />          
+                                            Text="(考核计算依据)" />
                                     </StackPanel>
                                     <TextBlock
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            FontSize="16"
-                                            FontWeight="Bold"
-                                            Foreground="#334155"
-                                            Text="{Binding TempRecord.HotResistance, StringFormat={}{0:F5} Ω, FallbackValue='0.00000 Ω'}" />
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="Bold"
+                                        Foreground="#334155"
+                                        Text="{Binding TempRecord.HotResistance, StringFormat={}{0:F5} Ω, FallbackValue='0.00000 Ω'}" />
                                 </DockPanel>
                             </Border>
-                            
+
                             <!--  停机环境温度与轴承最高温度  -->
                             <Grid Margin="0,8,0,0">
                                 <Grid.ColumnDefinitions>
@@ -822,7 +852,7 @@
                                         FontSize="13"
                                         FontWeight="Bold"
                                         Foreground="#334155"
-                                        Text="停机室温 θ_amb (℃)" />
+                                        Text="停机室温 θb (℃)" />
                                     <TextBox
                                         HorizontalContentAlignment="Center"
                                         FontSize="16"
@@ -1001,29 +1031,64 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-                <!-- 停机热态电阻冷却外推手工分析区 (左表右图)  -->
+                <!--  停机热态电阻冷却外推手工分析区 (左表右图)  -->
                 <Border
-                   Margin="0,15,0,20"
-                   Padding="22,18"
-                   Background="White"
-                   BorderBrush="#E2E8F0"
-                   BorderThickness="1"
-                   CornerRadius="10"
-                   SnapsToDevicePixels="True"
-                   TextOptions.TextFormattingMode="Display"
-                   TextOptions.TextRenderingMode="ClearType"
-                   UseLayoutRounding="True"
-                   Effect="{StaticResource EffectShadow2}">
+                    Margin="0,15,0,20"
+                    Padding="22,18"
+                    Background="White"
+                    BorderBrush="#E2E8F0"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Effect="{StaticResource EffectShadow2}"
+                    SnapsToDevicePixels="True"
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextRenderingMode="ClearType"
+                    UseLayoutRounding="True">
                     <StackPanel>
-                        <!-- 1. 顶部操作工具栏 -->
+                        <!--  1. 顶部操作工具栏  -->
                         <DockPanel Margin="0,0,0,16">
                             <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                <Border Width="5" Height="20" Margin="0,0,10,0" Background="#2563EB" CornerRadius="2" />
-                                <TextBlock VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Text="📉 停机热态电阻冷却外推分析 (GB/T 1032)" />
-                                <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#64748B" Text="现场停机打表后，点击【➕ 添加行】录入 2~4 组数据即可自动倒推" />
+                                <Border
+                                    Width="5"
+                                    Height="20"
+                                    Margin="0,0,10,0"
+                                    Background="#2563EB"
+                                    CornerRadius="2" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Text="📉 停机热态电阻冷却外推分析 (GB/T 1032)" />
                             </StackPanel>
-                            <!-- 右侧 3 个操作按钮 -->
+                            <!--  右侧 3 个操作按钮  -->
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <StackPanel
+                                    Margin="0,0,16,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="#475569"
+                                        Text="外推目标时间：" />
+                                    <hc:TextBox
+                                        Width="50"
+                                        Height="32"
+                                        Margin="4,0,4,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        FontSize="13"
+                                        FontWeight="Bold"
+                                        Foreground="#2563EB"
+                                        Text="{Binding CoolingTargetSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="#64748B"
+                                        Text="秒 (0为断电瞬间)" />
+                                </StackPanel>
                                 <Button
                                     Height="36"
                                     Margin="0,0,8,0"
@@ -1062,16 +1127,16 @@
                             </StackPanel>
                         </DockPanel>
 
-                        <!-- 2. 中部主体：左表右图 -->
+                        <!--  2. 中部主体：左表右图  -->
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <!-- 左边表格 (40%) -->
+                                <!--  左边表格 (40%)  -->
                                 <ColumnDefinition Width="4*" />
                                 <ColumnDefinition Width="18" />
-                                <!-- 右边 ScottPlot 拟合画布 (60%) -->
+                                <!--  右边 ScottPlot 拟合画布 (60%)  -->
                                 <ColumnDefinition Width="6*" />
                             </Grid.ColumnDefinitions>
-                            <!-- 左侧：打点记录 DataGrid（直接双击单元格输入秒数和电阻） -->
+                            <!--  左侧：打点记录 DataGrid（直接双击单元格输入秒数和电阻）  -->
                             <DockPanel Grid.Column="0">
                                 <DataGrid
                                     MaxHeight="480"
@@ -1082,8 +1147,8 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     CanUserReorderColumns="False"
-                                    CanUserResizeColumns="False"  
-                                    CanUserResizeRows="False"                                  
+                                    CanUserResizeColumns="False"
+                                    CanUserResizeRows="False"
                                     CanUserSortColumns="False"
                                     GridLinesVisibility="Horizontal"
                                     HeadersVisibility="Column"
@@ -1112,7 +1177,7 @@
                                             </Style.Triggers>
                                         </Style>
                                     </DataGrid.CellStyle>
-                                    <!-- 🌟 核心：强制表头文字水平居中、背景浅灰、边框对齐 🌟 -->
+                                    <!--  🌟 核心：强制表头文字水平居中、背景浅灰、边框对齐 🌟  -->
                                     <DataGrid.ColumnHeaderStyle>
                                         <Style TargetType="DataGridColumnHeader">
                                             <Setter Property="Height" Value="36" />
@@ -1126,16 +1191,29 @@
                                         </Style>
                                     </DataGrid.ColumnHeaderStyle>
                                     <DataGrid.Columns>
-                                        <!-- 序号：固定宽度 70 -->
-                                        <DataGridTextColumn Width="70" Binding="{Binding Index}" Header="序号" IsReadOnly="True" ElementStyle="{StaticResource CenterTextBlock}" />
+                                        <!--  序号：固定宽度 70  -->
+                                        <DataGridTextColumn
+                                            Width="70"
+                                            Binding="{Binding Index}"
+                                            ElementStyle="{StaticResource CenterTextBlock}"
+                                            Header="序号"
+                                            IsReadOnly="True" />
 
-                                        <!-- 停机秒数：给固定宽度 150，表头与数据全部居中 -->
-                                        <DataGridTextColumn Width="150" Binding="{Binding Seconds}" Header="停机时间 t (s)" ElementStyle="{StaticResource CenterTextBlock}" />
+                                        <!--  停机秒数：给固定宽度 150，表头与数据全部居中  -->
+                                        <DataGridTextColumn
+                                            Width="150"
+                                            Binding="{Binding Seconds}"
+                                            ElementStyle="{StaticResource CenterTextBlock}"
+                                            Header="停机时间 t (s)" />
 
-                                        <!-- 实测电阻：给固定宽度 180，表头与数据全部居中 -->
-                                        <DataGridTextColumn Width="180" Binding="{Binding Resistance, StringFormat={}{0:F5}}" Header="实测电阻 R (Ω)" ElementStyle="{StaticResource BoldCenterTextBlock}" />
+                                        <!--  实测电阻：给固定宽度 180，表头与数据全部居中  -->
+                                        <DataGridTextColumn
+                                            Width="180"
+                                            Binding="{Binding Resistance, StringFormat={}{0:F5}}"
+                                            ElementStyle="{StaticResource BoldCenterTextBlock}"
+                                            Header="实测电阻 R (Ω)" />
 
-                                        <!-- 操作列：居中放置删除按钮 -->
+                                        <!--  操作列：居中放置删除按钮  -->
                                         <DataGridTemplateColumn Width="*" Header="操作">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
@@ -1156,15 +1234,20 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </DockPanel>
-                            <!-- 右侧：ScottPlot 倒推拟合回归画布 -->
-                            <Border Grid.Column="2" Padding="14" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8">
+                            <!--  右侧：ScottPlot 倒推拟合回归画布  -->
+                            <Border
+                                Grid.Column="2"
+                                Padding="14"
+                                Background="#FAFAFA"
+                                BorderBrush="#E2E8F0"
+                                BorderThickness="1"
+                                CornerRadius="8">
                                 <DockPanel>
-                                    <!-- ScottPlot 图表控件 -->
+                                    <!--  ScottPlot 图表控件  -->
                                     <sp:WpfPlot x:Name="CoolingPlot" MinHeight="420" />
                                 </DockPanel>
                             </Border>
                         </Grid>
-
                     </StackPanel>
                 </Border>
             </StackPanel>

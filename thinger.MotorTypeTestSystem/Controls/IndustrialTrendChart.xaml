@@ -91,11 +91,102 @@
                         Foreground="#EF4444" />
                 </StackPanel>
             </DockPanel>
-            <!--  2. ScottPlot 画布  -->
-            <sp:WpfPlot
-                x:Name="MainPlot"
-                Grid.Row="1"
-                MinHeight="420" />
+            <!--  2. ScottPlot 画布及交互覆盖层  -->
+            <!--  2. ScottPlot 画布及交互覆盖层  -->
+            <Grid Grid.Row="1">
+                <!--  ScottPlot 绘图主画布  -->
+                <sp:WpfPlot
+                    x:Name="MainPlot"
+                    MinHeight="420"
+                    MouseLeave="MainPlot_MouseLeave"
+                    MouseMove="MainPlot_MouseMove" />
+
+                <!--  🌟 右上角交互式图例面板 (带 CheckBox 过滤，边距内收不跨轴)  -->
+                <Border
+                    Margin="0,15,30,0"
+                    Padding="8,6"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="#D9F8FAFC"
+                    BorderBrush="#CBD5E1"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Effect="{StaticResource EffectShadow1}">
+                    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="LegendItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox
+                                        Margin="2,2"
+                                        VerticalContentAlignment="Center"
+                                        Click="OnChannelVisibilityChanged"
+                                        IsChecked="{Binding IsVisible, Mode=TwoWay}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse
+                                                Width="9"
+                                                Height="9"
+                                                Margin="0,0,6,0"
+                                                Fill="{Binding ColorBrush}" />
+                                            <TextBlock
+                                                FontSize="11.5"
+                                                Foreground="#334155"
+                                                Text="{Binding ChannelName}" />
+                                        </StackPanel>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <!--  🌟 鼠标悬浮多通道实时探针卡片 (Tooltip: 雅灰半透明、内收避开Y轴刻度)  -->
+                <Border
+                    x:Name="HoverTooltipBorder"
+                    Margin="80,15,0,0"
+                    Padding="11,8"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Background="#C8334155"
+                    BorderBrush="#64748B"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Effect="{StaticResource EffectShadow1}"
+                    IsHitTestVisible="False"
+                    Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock
+                            x:Name="TxtTooltipTime"
+                            FontSize="11.5"
+                            FontWeight="SemiBold"
+                            Foreground="#38BDF8"
+                            Text="⏱️ 时间: 00:00:00" />
+                        <Separator Margin="0,4" Background="#475569" />
+                        <ItemsControl x:Name="TooltipItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,2" Orientation="Horizontal">
+                                        <Ellipse
+                                            Width="7"
+                                            Height="7"
+                                            Margin="0,0,6,0"
+                                            Fill="{Binding ColorBrush}" />
+                                        <TextBlock
+                                            Width="90"
+                                            FontSize="11"
+                                            Foreground="#E2E8F0"
+                                            Text="{Binding ChannelName}" />
+                                        <TextBlock
+                                            FontSize="11"
+                                            FontWeight="SemiBold"
+                                            Foreground="#FFFFFF"
+                                            Text="{Binding ValueText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Microsoft.Win32;
 using ScottPlot;
 using ScottPlot.Plottables;
@@ -37,6 +39,14 @@ namespace thinger.MotorTypeTestSystem.Controls
         // 记录当前已经分发了多少个通道颜色
         private int _channelCount = 0;
 
+        // 🌟 存储交互式复选框图例数据源
+        private readonly ObservableCollection<ChartChannelItem> _channelItems = new();
+
+        // 🌟 存储鼠标悬浮十字准星
+        private ScottPlot.Plottables.Crosshair? _crosshair;
+        private bool _isInitialized = false;
+        private bool _isRenderHookRegistered = false;
+
         #region 依赖属性 (外部直接可配标题和Y轴标签)
         public string Title
         {
@@ -69,7 +79,27 @@ namespace thinger.MotorTypeTestSystem.Controls
         public IndustrialTrendChart()
         {
             InitializeComponent();
-            Loaded += (s, e) => InitPlotStyle();
+            LegendItemsControl.ItemsSource = _channelItems;
+            Loaded += OnChartLoaded;
+        }
+
+        private void OnChartLoaded(object sender, RoutedEventArgs e)
+        {
+            if (!_isInitialized)
+            {
+                InitPlotStyle();
+                _isInitialized = true;
+            }
+            else
+            {
+                // 当从其他Tab页（如“历史试验”）切回当前页面时：
+                // 如果图表中已有曲线数据，自动按现有数据自适应（保持0~100°C），绝不再强制重置为 (0, 180)
+                if (_channelLoggers.Count > 0 && _channelLoggers.Values.Any(l => l.Data.Coordinates.Count > 0))
+                {
+                    ApplyIndustrialAutoScale();
+                }
+                MainPlot.Refresh();
+            }
         }
 
         #region scottplot的初始化
@@ -104,12 +134,16 @@ namespace thinger.MotorTypeTestSystem.Controls
             }
             // 3.🌟 必须在所有轴的文字都赋值完毕后，调用字体自适应！
             plot.Font.Automatic();
-            // 4.打开内置图例，并美化为精致的工业小方框
-            plot.ShowLegend(Alignment.UpperRight);
-            plot.Legend.FontSize = 12;
-            plot.Legend.BackgroundColor = ScottPlot.Color.FromHex("#F8FAFC"); // 浅灰底色
-            plot.Legend.OutlineColor = ScottPlot.Color.FromHex("#CBD5E1");    // 浅灰边框
-            plot.Legend.OutlineWidth = 1.5f;                                 // 1.5px 边框线
+
+            // 4.🌟 隐藏 ScottPlot 静态图例，改用右上角交互式 CheckBox 图例
+            plot.HideLegend();
+
+            // 🌟 创建十字准星（初始隐藏，鼠标滑入时跟随）
+            _crosshair = plot.Add.Crosshair(0, 0);
+            _crosshair.IsVisible = false;
+            _crosshair.LineColor = ScottPlot.Color.FromHex("#94A3B8");
+            _crosshair.LineWidth = 1.0f;
+            _crosshair.LinePattern = ScottPlot.LinePattern.Dashed;
 
             // 5. 网格线与背景配色（画布改为纯白背景，导出 PNG 截图清晰干净）
             plot.Grid.MajorLineColor = ScottPlot.Color.FromHex("#E2E8F0");
@@ -126,14 +160,19 @@ namespace thinger.MotorTypeTestSystem.Controls
             {
                 DateTime now = DateTime.Now;
                 plot.Axes.SetLimitsX(now.ToOADate(), now.AddMinutes(30).ToOADate());
+                plot.Axes.SetLimitsY(0, 100);
             }
-            plot.Axes.SetLimitsY(0, 180);
+
 
             // 🌟 7. 挂载全局渲染拦截器：无论鼠标怎么缩放、拖拽，在每帧渲染前锁定 Y 轴最低为 0
-            plot.RenderManager.RenderStarting += (s, e) =>
+            if (!_isRenderHookRegistered)
             {
-                EnsureYAxesNonNegative();
-            };
+                plot.RenderManager.RenderStarting += (s, e) =>
+                {
+                    EnsureYAxesNonNegative();
+                };
+                _isRenderHookRegistered = true;
+            }
             plot.Font.Automatic();
 
             // 1. 清空所有默认的鼠标按键行为
@@ -229,6 +268,15 @@ namespace thinger.MotorTypeTestSystem.Controls
                 logger.Axes.YAxis = GetOrCreateYAxis(targetAxisName);
                 _channelLoggers[channelName] = logger;
                 MainPlot.Plot.Font.Automatic();
+
+                // 🌟 自动加入右上角交互式图例（默认勾选显示）
+                var wpfBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(color.Alpha, color.Red, color.Green, color.Blue));
+                _channelItems.Add(new ChartChannelItem
+                {
+                    ChannelName = channelName,
+                    ColorBrush = wpfBrush,
+                    IsVisible = true
+                });
             }
 
             // 压入数据点
@@ -286,7 +334,7 @@ namespace thinger.MotorTypeTestSystem.Controls
                 // 没数据时回到默认标准视野
                 DateTime now = DateTime.Now;
                 MainPlot.Plot.Axes.SetLimitsX(now.ToOADate(), now.AddMinutes(30).ToOADate());
-                MainPlot.Plot.Axes.SetLimitsY(0, 120);
+                MainPlot.Plot.Axes.SetLimitsY(0, 100);
                 return;
             }
 
@@ -320,6 +368,8 @@ namespace thinger.MotorTypeTestSystem.Controls
         {
             _channelLoggers.Clear();
             _channelCount = 0;
+            _channelItems.Clear();
+            if (HoverTooltipBorder != null) HoverTooltipBorder.Visibility = Visibility.Collapsed;
             MainPlot.Plot.Clear();
             InitPlotStyle();
         }
@@ -539,5 +589,118 @@ namespace thinger.MotorTypeTestSystem.Controls
         #endregion
 
 
+        #region 右上角图例 CheckBox 控制显隐
+        private void OnChannelVisibilityChanged(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox cb && cb.DataContext is ChartChannelItem item)
+            {
+                if (_channelLoggers.TryGetValue(item.ChannelName, out var logger))
+                {
+                    logger.IsVisible = item.IsVisible;
+                    MainPlot.Refresh();
+                }
+            }
+        }
+        #endregion
+
+        #region 鼠标滑过显示十字准星与所有通道数值
+        private void MainPlot_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_crosshair == null || _channelLoggers.Count == 0 || !_channelLoggers.Values.Any(l => l.Data.Coordinates.Count > 0))
+            {
+                HoverTooltipBorder.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            var pos = e.GetPosition(MainPlot);
+            var coords = MainPlot.Plot.GetCoordinates(new ScottPlot.Pixel(pos.X, pos.Y));
+
+            // 更新十字准星位置
+            _crosshair.Position = coords;
+            _crosshair.IsVisible = true;
+
+            // 转换 X 轴时间
+            DateTime hoverDt = DateTime.FromOADate(coords.X);
+            TxtTooltipTime.Text = $"⏱️ 时间: {hoverDt:HH:mm:ss}";
+
+            // 遍历所有已勾选显示的通道，查找当前鼠标时间点的数值
+            var valueList = new List<ChannelValueItem>();
+            foreach (var chItem in _channelItems)
+            {
+                if (!chItem.IsVisible) continue; // 不勾选的不显示
+
+                if (_channelLoggers.TryGetValue(chItem.ChannelName, out var logger) && logger.Data.Coordinates.Count > 0)
+                {
+                    double? val = GetNearestYValue(logger.Data.Coordinates, coords.X);
+                    if (val.HasValue)
+                    {
+                        valueList.Add(new ChannelValueItem
+                        {
+                            ChannelName = chItem.ChannelName,
+                            ColorBrush = chItem.ColorBrush,
+                            ValueText = $"{val.Value:F1} ℃"
+                        });
+                    }
+                }
+            }
+
+            TooltipItemsControl.ItemsSource = valueList;
+            HoverTooltipBorder.Visibility = valueList.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            MainPlot.Refresh();
+        }
+
+        private void MainPlot_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (_crosshair != null)
+            {
+                _crosshair.IsVisible = false;
+                MainPlot.Refresh();
+            }
+            HoverTooltipBorder.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// 二分查找最贴近指定 X 轴时间的数据点数值
+        /// </summary>
+        private double? GetNearestYValue(IReadOnlyList<ScottPlot.Coordinates> coords, double targetX)
+        {
+            if (coords == null || coords.Count == 0) return null;
+            int low = 0, high = coords.Count - 1;
+            while (low <= high)
+            {
+                int mid = (low + high) / 2;
+                if (coords[mid].X < targetX) low = mid + 1;
+                else high = mid - 1;
+            }
+            int best = Math.Clamp(low, 0, coords.Count - 1);
+            if (high >= 0 && Math.Abs(coords[high].X - targetX) < Math.Abs(coords[best].X - targetX))
+            {
+                best = high;
+            }
+            return coords[best].Y;
+        }
+        #endregion
     }
+
+    #region 辅助实体定义
+    public class ChartChannelItem : INotifyPropertyChanged
+    {
+        public string ChannelName { get; set; } = string.Empty;
+        public Brush ColorBrush { get; set; } = Brushes.SteelBlue;
+        private bool _isVisible = true;
+        public bool IsVisible
+        {
+            get => _isVisible;
+            set { _isVisible = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible))); }
+        }
+        public event PropertyChangedEventHandler? PropertyChanged;
+    }
+
+    public class ChannelValueItem
+    {
+        public string ChannelName { get; set; } = string.Empty;
+        public Brush ColorBrush { get; set; } = Brushes.SteelBlue;
+        public string ValueText { get; set; } = string.Empty;
+    }
+    #endregion
 }

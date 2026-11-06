@@ -59,7 +59,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             //监听：一旦用户在弹窗里点击【保存并应用】，立即自动刷新右侧卡片！(等于用委托将两个方法绑定在一起)
             _tempChannelService.ChannelsChanged += RefreshActiveTempCards;
         }
-        #region MyRegion
+        #region 当温度通道配置发生变化时，重新筛选出启用的卡片
         /// <summary>
         /// 当通道配置发生变化时，重新筛选出启用的卡片
         /// </summary>

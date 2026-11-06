@@ -1,3 +1,4 @@
+﻿using System.Windows.Data;
 using ScottPlot;
 using System;
 using System.Windows;
@@ -62,6 +63,14 @@ namespace thinger.MotorTypeTestSystem.Views
             vm.RequestDrawCoolingPlot += OnRequestDrawCoolingPlot;
             vm.RequestClearCoolingPlot -= OnRequestClearCoolingPlot;
             vm.RequestClearCoolingPlot += OnRequestClearCoolingPlot;
+
+            // 监听测温通道配置变动事件，动态刷新工况表格列
+            if (vm.TempChannelService != null)
+            {
+                vm.TempChannelService.ChannelsChanged -= OnChannelsChanged;
+                vm.TempChannelService.ChannelsChanged += OnChannelsChanged;
+            }
+            RefreshDynamicTemperatureColumns();
         }
 
 
@@ -79,6 +88,66 @@ namespace thinger.MotorTypeTestSystem.Views
             // 注销冷却外推画图事件
             vm.RequestDrawCoolingPlot -= OnRequestDrawCoolingPlot;
             vm.RequestClearCoolingPlot -= OnRequestClearCoolingPlot;
+
+            if (vm.TempChannelService != null)
+            {
+                vm.TempChannelService.ChannelsChanged -= OnChannelsChanged;
+            }
+        }
+
+        private readonly System.Collections.Generic.List<DataGridColumn> _dynamicTempColumns = new();
+
+        private void OnChannelsChanged()
+        {
+            Dispatcher.Invoke(RefreshDynamicTemperatureColumns);
+        }
+
+        /// <summary>
+        /// 🌟 动态重构工况表格中的测温通道列 (测了什么通道就自动展示什么列，名称与配置保持同步)
+        /// </summary>
+        private void RefreshDynamicTemperatureColumns()
+        {
+            if (DataContext is not TemperatureRiseViewModel vm) return;
+            if (ProcessDataGrid == null) return;
+
+            // 1. 移除已存在的动态温度列
+            foreach (var col in _dynamicTempColumns)
+            {
+                ProcessDataGrid.Columns.Remove(col);
+            }
+            _dynamicTempColumns.Clear();
+
+            // 2. 找到操作列 ColOperation 的当前索引位置
+            int insertIndex = ProcessDataGrid.Columns.IndexOf(ColOperation);
+            if (insertIndex < 0) insertIndex = ProcessDataGrid.Columns.Count;
+
+            var centerStyle = TryFindResource("CenterTextBlock") as Style;
+            var redStyle = TryFindResource("HighlightRedTextBlock") as Style;
+
+            // 3. 遍历全局配置的所有启用通道，动态生成并插入列
+            if (vm.TempChannelService?.Channels != null)
+            {
+                foreach (var ch in vm.TempChannelService.Channels)
+                {
+                    if (!ch.IsEnabled) continue;
+
+                    string headerText = string.IsNullOrWhiteSpace(ch.PointName)
+                        ? $"{ch.ChannelDisplay} (℃)"
+                        : $"{ch.PointName} (℃)";
+
+                    var col = new DataGridTextColumn
+                    {
+                        Header = headerText,
+                        Binding = new Binding($"[{ch.ChannelIndex}]") { StringFormat = "{0:F1}" },
+                        Width = new DataGridLength(105),
+                        ElementStyle = (ch.PointType == "绕组" && redStyle != null) ? redStyle : centerStyle
+                    };
+
+                    _dynamicTempColumns.Add(col);
+                    ProcessDataGrid.Columns.Insert(insertIndex, col);
+                    insertIndex++;
+                }
+            }
         }
 
 
@@ -170,7 +239,7 @@ namespace thinger.MotorTypeTestSystem.Views
         /// <summary>
         /// 🌟 在右侧 ScottPlot 画布上绘制实测散点与反向延长回归线
         /// </summary>
-        private void OnRequestDrawCoolingPlot(List<CoolingPoint> points, double r0, double slope)
+        private void OnRequestDrawCoolingPlot(List<CoolingPoint> points, double r0, double slope, int targetSec = 0, double targetR = 0)
         {
             if (points == null || points.Count == 0) return;
             var plot = CoolingPlot.Plot;
