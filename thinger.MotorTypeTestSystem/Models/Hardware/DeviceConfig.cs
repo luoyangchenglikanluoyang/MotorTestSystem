@@ -54,5 +54,10 @@ namespace thinger.MotorTypeTestSystem.Models.Hardware
         /// 从站地址 (RTU和TCP有时候都需要)
         /// </summary>
         public byte SlaveId { get; set; } = 1;
+
+        /// <summary>
+        /// 设备数据采集扫描周期 (毫秒)，比如 PLC 可以设 100~200ms，温度仪表设 1000ms
+        /// </summary>
+        public int ScanRateMs { get; set; } = 500; // 默认 500ms
     }
 }

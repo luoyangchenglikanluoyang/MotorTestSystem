@@ -101,88 +101,112 @@ namespace thinger.MotorTypeTestSystem.Services
         /// </summary>
         private async Task PollingChannelLoop(string channelKey, List<ModbusGroupConfig> channelGroups, CancellationToken ct)
         {
-            // 快慢分离：巡检仪 1000ms，PLC 200ms 极速，其他默认 500ms
-            int loopDelay = 500;
-            if (channelKey.Contains("COM4")) loopDelay = 1000; // 温度巡检仪 1秒一次
-            if (channelKey.Contains("COM1")) loopDelay = 200;  // 主控 PLC 100ms 高频刷新
+
+
+            // 1. 遍历传进来的所有组，为每个组生成一张卡片
+            var groupStates = channelGroups.Select(g =>
+            {
+                // 去总设备表里找到它对应的设备配置（拿到从站地址 SlaveId）
+                var deviceConfig = _deviceManager.DeviceConfigs.Find(d => d.DeviceId == g.DeviceId);
+                return new PollingState
+                {
+                    Group = g,
+                    DeviceConfig = deviceConfig,
+                    ScanRateMs = deviceConfig?.ScanRateMs ?? 500, // 拿到这个设备设定的周期（默认500ms）
+                    NextRunTime = DateTime.MinValue // 【关键】设为极小值（公元1年1月1日）
+                };
+            })
+            .Where(s => s.DeviceConfig != null) // 如果配置里没找到这个设备，就过滤扔掉，防止报错
+            .ToList();
 
             try
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    foreach (var group in channelGroups)
+                    DateTime now = DateTime.UtcNow;// 抓取当前世界标准时间
+                    bool executedAny = false;
+
+                    foreach (var state in groupStates)
                     {
-                        var deviceConfig = _deviceManager.DeviceConfigs.Find(d => d.DeviceId == group.DeviceId);
-                        if (deviceConfig == null) continue;
-
-                        try
+                        // 关键判断：当前时间到期了吗？
+                        if (now >= state.NextRunTime)
                         {
-                            object service = ConnectionManager.PeekService(deviceConfig);
-                            if (service == null) continue;
-
-                            // 1. Modbus TCP 处理
-                            if (service is ModbusTCPService tcp && tcp.IsConnected)
+                            try
                             {
-                                if (group.FunctionCode == 3)
+                                object service = ConnectionManager.PeekService(state.DeviceConfig);
+                                if (service == null) continue;
+
+                                // --- 下面是你原有的 Modbus 读写逻辑，保持不变 ---
+                                if (service is ModbusTCPService tcp && tcp.IsConnected)
                                 {
-                                    ushort[] rawData = await tcp.ReadHoldingRegistersAsync(group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length)
+                                    if (state.Group.FunctionCode == 3)
                                     {
-                                        ParseGroupData(group, rawData, service);
-                                        ComputeDerivedTags(); // 🌟 刚采完该组，立刻就地计算！
+                                        ushort[] rawData = await tcp.ReadHoldingRegistersAsync(state.Group.StartAddress, state.Group.Length, ct);
+                                        if (rawData != null && rawData.Length >= state.Group.Length)
+                                        {
+                                            ParseGroupData(state.Group, rawData, service);
+                                            ComputeDerivedTags();
+                                        }
+                                    }
+                                    else if (state.Group.FunctionCode == 4)
+                                    {
+                                        ushort[] rawData = await tcp.ReadInputRegistersAsync(state.Group.StartAddress, state.Group.Length, ct);
+                                        if (rawData != null && rawData.Length >= state.Group.Length)
+                                        {
+                                            ParseGroupData(state.Group, rawData, service);
+                                            ComputeDerivedTags();
+                                        }
+                                    }
+                                    else if (state.Group.FunctionCode == 1 || state.Group.FunctionCode == 2)
+                                    {
+                                        bool[] boolData = await tcp.ReadCoilsAsync(state.Group.StartAddress, state.Group.Length, ct);
+                                        if (boolData != null && boolData.Length >= state.Group.Length) ParseGroupDataBool(state.Group, boolData);
                                     }
                                 }
-                                else if (group.FunctionCode == 4)
+                                else if (service is ModbusRTUService rtu && rtu.IsConnected)
                                 {
-                                    ushort[] rawData = await tcp.ReadInputRegistersAsync(group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length)
+                                    if (state.Group.FunctionCode == 3)
                                     {
-                                        ParseGroupData(group, rawData, service);
-                                        ComputeDerivedTags();
+                                        ushort[] rawData = await rtu.ReadHoldingRegistersAsync(state.DeviceConfig.SlaveId, state.Group.StartAddress, state.Group.Length, ct);
+                                        if (rawData != null && rawData.Length >= state.Group.Length)
+                                        {
+                                            ParseGroupData(state.Group, rawData, service);
+                                            ComputeDerivedTags();
+                                        }
                                     }
-                                }
-                                else if (group.FunctionCode == 1 || group.FunctionCode == 2)
-                                {
-                                    bool[] boolData = await tcp.ReadCoilsAsync(group.StartAddress, group.Length, ct);
-                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
+                                    else if (state.Group.FunctionCode == 4)
+                                    {
+                                        ushort[] rawData = await rtu.ReadInputRegistersAsync(state.DeviceConfig.SlaveId, state.Group.StartAddress, state.Group.Length, ct);
+                                        if (rawData != null && rawData.Length >= state.Group.Length)
+                                        {
+                                            ParseGroupData(state.Group, rawData, service);
+                                            ComputeDerivedTags();
+                                        }
+                                    }
+                                    else if (state.Group.FunctionCode == 1 || state.Group.FunctionCode == 2)
+                                    {
+                                        bool[] boolData = await rtu.ReadCoilsAsync(state.DeviceConfig.SlaveId, state.Group.StartAddress, state.Group.Length, ct);
+                                        if (boolData != null && boolData.Length >= state.Group.Length) ParseGroupDataBool(state.Group, boolData);
+                                    }
                                 }
                             }
-                            // 2. Modbus RTU 处理
-                            else if (service is ModbusRTUService rtu && rtu.IsConnected)
+                            catch (Exception ex)
                             {
-                                if (group.FunctionCode == 3)
-                                {
-                                    ushort[] rawData = await rtu.ReadHoldingRegistersAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length)
-                                    {
-                                        ParseGroupData(group, rawData, service);
-                                        ComputeDerivedTags(); // 🌟 刚采完该组，立刻就地计算！
-                                    }
-                                }
-                                else if (group.FunctionCode == 4)
-                                {
-                                    ushort[] rawData = await rtu.ReadInputRegistersAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (rawData != null && rawData.Length >= group.Length)
-                                    {
-                                        ParseGroupData(group, rawData, service);
-                                        ComputeDerivedTags();
-                                    }
-                                }
-                                else if (group.FunctionCode == 1 || group.FunctionCode == 2)
-                                {
-                                    bool[] boolData = await rtu.ReadCoilsAsync(deviceConfig.SlaveId, group.StartAddress, group.Length, ct);
-                                    if (boolData != null && boolData.Length >= group.Length) ParseGroupDataBool(group, boolData);
-                                }
+                                _logger.Debug($"链路 [{channelKey}] 读取设备 {state.Group.DeviceId} 失败: {ex.Message}");
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Debug($"链路 [{channelKey}] 读取设备 {group.DeviceId} 失败: {ex.Message}");
+                            finally
+                            {
+                                // 3. 关键点：无论成功失败，读取完成后，更新该组的下一次执行时间
+                                // 这里使用 DateTime.UtcNow 加周期，而不是之前的 now，
+                                // 是因为如果网络卡顿导致读取花了很久，从完成时刻往后推周期最安全，能防止“拥堵累积”
+                                state.NextRunTime = DateTime.UtcNow.AddMilliseconds(state.ScanRateMs);
+                                executedAny = true;
+                            }
                         }
                     }
 
-                    // 属于当前物理链路的自主休息间隔
-                    await Task.Delay(loopDelay, ct);
+                    // 动态休眠防止 CPU 跑满 100%
+                    await Task.Delay(executedAny ? 1 : 20, ct);
                 }
             }
             catch (OperationCanceledException) { }
@@ -322,5 +346,16 @@ namespace thinger.MotorTypeTestSystem.Services
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 通信块状态辅助卡片
+    /// </summary>
+    public class PollingState
+    {
+        public ModbusGroupConfig Group { get; set; }    //数据块组
+        public DeviceConfig DeviceConfig { get; set; }  //设备组 从站站号是多少？属于哪个设备？
+        public int ScanRateMs { get; set; }             // 这组数据的采集周期（毫秒）
+        public DateTime NextRunTime { get; set; }       // 下一次该读它的具体时间
     }
 }

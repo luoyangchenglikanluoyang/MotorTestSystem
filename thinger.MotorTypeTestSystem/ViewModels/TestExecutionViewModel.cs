@@ -27,7 +27,8 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         /// </summary>
         private readonly IContainerProvider _containerProvider;
 
-        private readonly TagPoolService _tagPool;//动态全局数据池
+        private readonly TagPoolService _tagPool; // 动态全局数据池
+        public TagPoolService TagPool => _tagPool; // 暴露属性供 WPF 界面 XAML 绑定
         private readonly ITempChannelService _tempChannelService;//温度通道配置接口     
         [ObservableProperty]
         private ObservableCollection<TempCardItem> _activeTempCards = new();// 动态绑定到右侧界面的测温卡片集合

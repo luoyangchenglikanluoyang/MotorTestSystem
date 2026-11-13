@@ -1,4 +1,4 @@
-﻿using HandyControl.Collections;
+using HandyControl.Collections;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -48,7 +48,17 @@ namespace thinger.MotorTypeTestSystem.Services
         {
             var val = this[tagName].Value;
             if (val == null) return default;//default在这里是给你一个指定类型的默认值。
-            return (T)val; // 强转成你需要的类型（比如 float 或 int）
+            if (val is T exactVal) return exactVal;
+
+            try
+            {
+                var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+                return (T)Convert.ChangeType(val, targetType);
+            }
+            catch
+            {
+                return default!;
+            }
         }
 
     }
