@@ -7,6 +7,7 @@ using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
 using thinger.MotorTypeTestSystem.Models;
+using thinger.MotorTypeTestSystem.Models.NoLoadTestModels;
 using Thinger.DatabaseOperationlibrary;
 
 namespace thinger.MotorTypeTestSystem.Services
@@ -267,6 +268,57 @@ namespace thinger.MotorTypeTestSystem.Services
                 throw;
             }
         }
+
+        #region 空载试验
+        public async Task<bool> SaveNoLoadTestRecordAsync(NoLoadTestRecord record)
+        {
+            try
+            {
+                string sql = @"INSERT INTO motor_noloadtest_record
+                (RecordId,ColdResistance,ColdResistanceTemp,AmbientTemp,RatedNoLoadVoltage,RatedNoLoadCurrent,CurrentRatio,
+                RatedNoLoadPower,RatedPowerFactor,RatedNoLoadSpeed,RatedStatorCopperLoss,RatedConstantLoss,UncorrectedMechanicalLoss,
+                MechanicalLoss,IronLoss,RegressionR2,MaxAllowedCurrentRatio,MaxAllowedNoLoadPower,IsQualified,PointsJson,CurveImagePath,TestTime
+                )VALUES
+                (
+                @RecordId,@ColdResistance,@ColdResistanceTemp,@AmbientTemp,@RatedNoLoadVoltage,@RatedNoLoadCurrent,@CurrentRatio,
+                @RatedNoLoadPower,@RatedPowerFactor,@RatedNoLoadSpeed,@RatedStatorCopperLoss,@RatedConstantLoss,@UncorrectedMechanicalLoss,
+                @MechanicalLoss,@IronLoss,@RegressionR2,@MaxAllowedCurrentRatio,@MaxAllowedNoLoadPower,@IsQualified,@PointsJson,@CurveImagePath,@TestTime                
+                )ON DUPLICATE KEY UPDATE 
+                RecordId=@RecordId,ColdResistance=@ColdResistance,ColdResistanceTemp=@ColdResistanceTemp,AmbientTemp=@AmbientTemp,RatedNoLoadVoltage=@RatedNoLoadVoltage,
+                RatedNoLoadCurrent=@RatedNoLoadCurrent,CurrentRatio=@CurrentRatio,RatedNoLoadPower=@RatedNoLoadPower,RatedPowerFactor=@RatedPowerFactor,RatedNoLoadSpeed=@RatedNoLoadSpeed,
+                RatedStatorCopperLoss=@RatedStatorCopperLoss,RatedConstantLoss=@RatedConstantLoss,UncorrectedMechanicalLoss=@UncorrectedMechanicalLoss,
+                MechanicalLoss=@MechanicalLoss,IronLoss=@IronLoss,RegressionR2=@RegressionR2,MaxAllowedCurrentRatio=@MaxAllowedCurrentRatio,MaxAllowedNoLoadPower=@MaxAllowedNoLoadPower,
+                IsQualified=@IsQualified,PointsJson=@PointsJson,CurveImagePath=@CurveImagePath,TestTime=@TestTime;
+                ";
+                int rows = await _dbService.ExecuteAsync(sql, record);
+                if (rows > 0)
+                {
+                    _Logger.Information($"试验 [{record.RecordId}] 空载数据保存/更新成功");
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _Logger.Error(ex, $"试验 [{record.RecordId}] 空载数据保存异常");
+                throw;
+            }
+        }
+
+        public async Task<NoLoadTestRecord?> GetNoLoadTestRecordByRecordIdAsync(string recordId)
+        {
+            string sql = "SELECT * FROM motor_noloadtest_record WHERE RecordId = @RecordId LIMIT 1 ";
+            try
+            {
+                return await _dbService.QueryFirstOrDefaultAsync<NoLoadTestRecord>(sql, new { RecordId = recordId });
+            }
+            catch (Exception ex)
+            {
+                _Logger.Error(ex, $"查询试验 [{recordId}] 的空载数据发生异常");
+                throw;
+            }
+        }
+        #endregion
 
     }
 }

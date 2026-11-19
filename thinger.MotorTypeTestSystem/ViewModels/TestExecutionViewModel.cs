@@ -109,6 +109,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                     "Nameplate" => _containerProvider.Resolve<NamePlateView>(),
                     "DcResistance" => _containerProvider.Resolve<DcResistanceView>(),
                     "TemperatureRise" => _containerProvider.Resolve<TemperatureRiseView>(),
+                    "NoLoad" => _containerProvider.Resolve<NoLoadTestView>(),
                     _ => null
                 };
 

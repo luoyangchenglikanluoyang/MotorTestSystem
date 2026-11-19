@@ -5,8 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using thinger.MotorTypeTestSystem.Models;
 using thinger.MotorTypeTestSystem.ViewModels;
+using thinger.MotorTypeTestSystem.Models.TestHelpers;
 
 namespace thinger.MotorTypeTestSystem.Views
 {

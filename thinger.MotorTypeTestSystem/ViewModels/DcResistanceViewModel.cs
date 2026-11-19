@@ -41,7 +41,6 @@ namespace thinger.MotorTypeTestSystem.ViewModels
         /// <summary>
         /// 当切换到本页面时，总控台自动把电机的建档信息传进来
         /// </summary>
-        [RelayCommand]
         public async void InitializeTestRecord(MotorTestRecord mainRecord)
         {
             if (mainRecord == null) return;

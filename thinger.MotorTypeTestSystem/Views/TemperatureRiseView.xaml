@@ -13,6 +13,7 @@
     d:DesignWidth="1700"
     prism:ViewModelLocator.AutoWireViewModel="True"
     Background="White"
+    TextOptions.TextFormattingMode="Display"
     mc:Ignorable="d">
     <UserControl.Resources>
         <Style x:Key="CenterTextBlock" TargetType="TextBlock">

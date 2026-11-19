@@ -174,7 +174,7 @@
                         Tag="🛡️" />
                     <RadioButton
                         Command="{Binding SwitchSubViewCommand}"
-                        CommandParameter="Nameplate"
+                        CommandParameter="NoLoad"
                         Content="空载试验"
                         Style="{StaticResource SubNavBtnStyle}"
                         Tag="⚡" />

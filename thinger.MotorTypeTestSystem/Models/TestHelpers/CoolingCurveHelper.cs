@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace thinger.MotorTypeTestSystem.Models
+namespace thinger.MotorTypeTestSystem.Models.TestHelpers
 {
     /// <summary>
-    /// GB/T 1032 冷却曲线最小二乘法线性回归数学引擎
+    /// GB/T 1032 冷却曲线最小二乘法线性回归数学引擎(用于温升试验倒推停机电阻)
     /// </summary>
     public class CoolingCurveHelper
     {

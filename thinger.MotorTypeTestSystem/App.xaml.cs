@@ -106,6 +106,7 @@ namespace thinger.MotorTypeTestSystem
             containerRegistry.RegisterForNavigation<DcResistanceView, DcResistanceViewModel>();
             containerRegistry.RegisterForNavigation<HistoryQueryView, HistoryQueryViewModel>();
             containerRegistry.RegisterForNavigation<TemperatureRiseView, TemperatureRiseViewModel>();
+            containerRegistry.RegisterForNavigation<NoLoadTestView,NoLoadTestViewModel>();
         }
 
         protected override Window CreateShell()
