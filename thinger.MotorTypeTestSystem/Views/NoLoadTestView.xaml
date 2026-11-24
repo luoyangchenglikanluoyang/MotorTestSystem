@@ -91,9 +91,466 @@
                                         Text="{Binding MotorRecord.Id, FallbackValue='未关联'}" />
                                 </StackPanel>
                             </Border>
+
+                            <!--  额定参考胶囊（仅展示核心对照值，不占大空间）  -->
+                            <Border
+                                Margin="10,0,0,0"
+                                Padding="10,4"
+                                Background="#EFF6FF"
+                                BorderBrush="#BFDBFE"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="#1E40AF"
+                                        Text="额定基准：" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="#1D4ED8"
+                                        Text="{Binding MotorRecord.RatedVoltage, StringFormat='{}UN: {0:F0}V | '}" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="#1D4ED8"
+                                        Text="{Binding MotorRecord.RatedCurrent, StringFormat='{}IN: {0:F2}A'}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <!--  右侧：核心操作按钮组  -->
+                        <StackPanel
+                            HorizontalAlignment="Right"
+                            DockPanel.Dock="Right"
+                            Orientation="Horizontal">
+                            <!--  采入当前工况点  -->
+                            <Button
+                                Height="36"
+                                Margin="0,0,8,0"
+                                Padding="16,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Command="{Binding AddSamplePointCommand}"
+                                Content="📌 采入当前工况点"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Style="{StaticResource ButtonPrimary}" />
+                            <!--  立即计算  -->
+                            <Button
+                                Height="36"
+                                Margin="0,0,8,0"
+                                Padding="16,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Background="#E2E8F0"
+                                BorderThickness="0"
+                                Command="{Binding CalculateCommand}"
+                                Content="结果计算"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="#1E293B" />
+                            <!--  保存数据  -->
+                            <Button
+                                Height="36"
+                                Margin="0,0,8,0"
+                                Padding="18,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Background="#059669"
+                                BorderThickness="0"
+                                Command="{Binding SaveCommand}"
+                                Content="💾 保存试验数据"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="White" />
+                            <!--  清空点位  -->
+                            <Button
+                                Height="36"
+                                Padding="12,0"
+                                hc:BorderElement.CornerRadius="6"
+                                Background="#FEE2E2"
+                                BorderThickness="0"
+                                Command="{Binding ClearAllPointsCommand}"
+                                Content="🗑 清空点位"
+                                Cursor="Hand"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Foreground="#DC2626" />
                         </StackPanel>
                     </DockPanel>
                 </Border>
+
+                <!--  =========================================================================  -->
+                <!--  2. 冷态电阻基准与试验环境卡片（从直流电阻试验自动继承，支持微调）  -->
+                <!--  =========================================================================  -->
+                <Border Margin="0,0,0,15"
+                        Padding="24,16"
+                        Background="White"
+                        CornerRadius="10"
+                        Effect="{StaticResource EffectShadow2}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="#475569"
+                            Text="基准冷态端电阻 R₁：" />
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="8,0,24,0"
+                            Orientation="Horizontal">
+                            <TextBox
+                                Width="100"
+                                Style="{StaticResource UnderlineInputStyle}"
+                                Text="{Binding NoLoadRecord.ColdResistance, Mode=TwoWay, StringFormat='0.00000'}" />
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="#64748B"
+                                Text="Ω" />
+                        </StackPanel>
+                        <TextBlock
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="#475569"
+                            Text="冷态基准温度 θ₁：" />
+                        <StackPanel
+                            Grid.Column="3"
+                            Margin="8,0,24,0"
+                            Orientation="Horizontal">
+                            <TextBox
+                                Width="70"
+                                Style="{StaticResource UnderlineInputStyle}"
+                                Text="{Binding NoLoadRecord.ColdResistanceTemp, Mode=TwoWay, StringFormat='0.0'}" />
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="#64748B"
+                                Text="℃" />
+                        </StackPanel>
+                        <TextBlock
+                            Grid.Column="4"
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="#475569"
+                            Text="试验环境温度 θ₀：" />
+                        <StackPanel
+                            Grid.Column="5"
+                            Margin="8,0,24,0"
+                            Orientation="Horizontal">
+                            <TextBox
+                                Width="70"
+                                Style="{StaticResource UnderlineInputStyle}"
+                                Text="{Binding NoLoadRecord.AmbientTemp, Mode=TwoWay, StringFormat='0.0'}" />
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="#64748B"
+                                Text="℃" />
+                        </StackPanel>
+                        <TextBlock
+                            Grid.Column="6"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            FontStyle="Italic"
+                            Foreground="#94A3B8"
+                            Text="💡 说明：自动继承自直流电阻试验，用于计算各点定子铜耗 Pcu0 并分离出铁耗" />
+                    </Grid>
+                </Border>
+
+                <!--  =========================================================================  -->
+                <!--  3. 核心数据表卡片：空载 8 点测试数据表 (DataGrid)  -->
+                <!--  =========================================================================  -->
+                <Border Margin="0,0,0,15"
+                        Padding="24,16"
+                        Background="White"
+                        CornerRadius="10"
+                        Effect="{StaticResource EffectShadow2}">
+                    <DataGrid MaxHeight="380"
+                              Background="White"
+                              BorderBrush="#E2E8F0"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#F1F5F9"
+                              RowHeaderWidth="0"
+                              AutoGenerateColumns="False"
+                              ItemsSource="{Binding NoLoadTestPoints}"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              CanUserSortColumns="False"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              HeadersVisibility="Column"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#F8FAFC" />
+                                <Setter Property="Foreground" Value="#475569" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="FontSize" Value="13" />
+                                <Setter Property="Height" Value="36" />
+                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                <Setter Property="BorderBrush" Value="#E2E8F0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Height" Value="34" />
+                                <Setter Property="FontSize" Value="13" />
+                                <Setter Property="Foreground" Value="#0F172A" />
+                                <Setter Property="VerticalContentAlignment" Value="Center" />
+                                <!-- 右键菜单：便捷删除或清空 -->
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu>
+                                            <MenuItem Command="{Binding DataContext.DeletePointCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                        CommandParameter="{Binding}"
+                        Header="🗑️ 删除选中测试点" />
+                                            <Separator />
+                                            <MenuItem Command="{Binding DataContext.ClearAllPointsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                        Header="🧹 清空全部测试点" />
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F8FAFC" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#E0F2FE" />
+                                        <Setter Property="Foreground" Value="#0F172A" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="50" Binding="{Binding PointIndex}" ElementStyle="{StaticResource CenterTextBlock}" Header="序号" />
+                            <DataGridTextColumn Width="90" Binding="{Binding SampleTime, StringFormat='{}{0:HH:mm:ss}'}" ElementStyle="{StaticResource CenterTextBlock}" Header="采样时间" />
+                            <DataGridTextColumn Width="105" Binding="{Binding Voltage, StringFormat='0.0'}" ElementStyle="{StaticResource BlueBoldTextBlock}" Header="线电压 U₀(V)" />
+                            <DataGridTextColumn Width="85" Binding="{Binding VoltageRatio, StringFormat='P1'}" ElementStyle="{StaticResource CenterTextBlock}" Header="U₀/UN" />
+                            <DataGridTextColumn Width="100" Binding="{Binding Current, StringFormat='0.000'}" ElementStyle="{StaticResource OrangeBoldTextBlock}" Header="线电流 I₀(A)" />
+                            <DataGridTextColumn Width="95" Binding="{Binding CurrentUnbalance, StringFormat='0.00'}" ElementStyle="{StaticResource CenterTextBlock}" Header="不平衡度(%)" />
+                            <DataGridTextColumn Width="110" Binding="{Binding InputPower, StringFormat='0.0'}" ElementStyle="{StaticResource BoldCenterTextBlock}" Header="输入功率 P₀(W)" />
+                            <DataGridTextColumn Width="95" Binding="{Binding PowerFactor, StringFormat='0.0000'}" ElementStyle="{StaticResource CenterTextBlock}" Header="cosφ₀" />
+                            <DataGridTextColumn Width="95" Binding="{Binding Speed, StringFormat='0.0'}" ElementStyle="{StaticResource CenterTextBlock}" Header="转速(r/min)" />
+                            <DataGridTextColumn Width="85" Binding="{Binding Slip, StringFormat='0.0000'}" ElementStyle="{StaticResource CenterTextBlock}" Header="转差率 s" />
+                            <DataGridTextColumn Width="105" Binding="{Binding WindingTemp, StringFormat='0.0'}" ElementStyle="{StaticResource CenterTextBlock}" Header="绕组温度θ₀(℃)" />
+                            <DataGridTextColumn Width="100" Binding="{Binding StatorResistance, StringFormat='0.0000'}" ElementStyle="{StaticResource CenterTextBlock}" Header="换算R₀(Ω)" />
+                            <DataGridTextColumn Width="100" Binding="{Binding StatorCopperLoss, StringFormat='0.0'}" ElementStyle="{StaticResource CenterTextBlock}" Header="铜耗Pcu0(W)" />
+                            <DataGridTextColumn Width="105" Binding="{Binding NetLoss, StringFormat='0.0'}" ElementStyle="{StaticResource BoldCenterTextBlock}" Header="净损耗Pc(W)" />
+                            <DataGridTextColumn Width="100" Binding="{Binding IronLoss, StringFormat='0.0'}" ElementStyle="{StaticResource CenterTextBlock}" Header="铁耗Pfe(W)" />
+
+                            <!-- 操作列 -->
+                            <DataGridTemplateColumn Width="70" Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Padding="8,2"
+                                  hc:BorderElement.CornerRadius="4"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Command="{Binding DataContext.DeletePointCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                  CommandParameter="{Binding}"
+                                  Content="删除"
+                                  Cursor="Hand"
+                                  FontSize="12"
+                                  Foreground="#EF4444" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <!--  =========================================================================  -->
+                <!--  4. 横向通栏：国标损耗分离与核算结果仪表卡片  -->
+                <!--  =========================================================================  -->
+                <Border
+                    Margin="0,0,0,12"
+                    Padding="20,16"
+                    Background="White"
+                    CornerRadius="8"
+                    Effect="{StaticResource EffectShadow2}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- 卡片标题与综合合格判定徽章 -->
+                        <DockPanel Grid.Row="0">
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <Border
+                                    Width="4"
+                                    Height="18"
+                                    Margin="0,0,8,0"
+                                    Background="#059669"
+                                    CornerRadius="2" />
+                                <TextBlock
+                                    FontSize="15"
+                                    FontWeight="Bold"
+                                    Foreground="#0F172A"
+                                    Text="国标损耗分离与额定特性核算结果" />
+                                <TextBlock
+                                    Margin="12,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="#94A3B8"
+                                    Text="（GB/T 1032-2023 低压段最小二乘外推与额定工况插值）" />
+                            </StackPanel>
+
+                            <!-- 大号判定徽章 -->
+                            <Border
+                                Padding="12,4"
+                                HorizontalAlignment="Right"
+                                CornerRadius="4">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#F1F5F9" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding NoLoadRecord.IsQualified}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding NoLoadRecord.IsQualified}" Value="False">
+                                                <Setter Property="Background" Value="#FEE2E2" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="13" FontWeight="Bold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="⏳ 待核算" />
+                                            <Setter Property="Foreground" Value="#64748B" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding NoLoadRecord.IsQualified}" Value="True">
+                                                    <Setter Property="Text" Value="✅ 试验合格" />
+                                                    <Setter Property="Foreground" Value="#15803D" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding NoLoadRecord.IsQualified}" Value="False">
+                                                    <Setter Property="Text" Value="❌ 试验不合格" />
+                                                    <Setter Property="Foreground" Value="#B91C1C" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DockPanel>
+
+                        <!-- 横向 8 列参数网格（分两排：上排损耗分离，下排额定特性） -->
+                        <Border
+                            Grid.Row="2"
+                            Padding="16,12"
+                            Background="#F8FAFC"
+                            BorderBrush="#E2E8F0"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                </Grid.RowDefinitions>
+
+                                <!-- 第一排：损耗分离与拟合质量 -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="截距机械耗 Pfw0：" />
+                                    <TextBlock FontWeight="SemiBold" FontSize="13" Foreground="#0F172A" Text="{Binding NoLoadRecord.UncorrectedMechanicalLoss, StringFormat='{}{0:F1} W', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="修正风摩耗 Pfw：" />
+                                    <TextBlock FontWeight="Bold" FontSize="13.5" Foreground="#EA580C" Text="{Binding NoLoadRecord.MechanicalLoss, StringFormat='{}{0:F1} W', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="额定铁芯损耗 Pfe：" />
+                                    <TextBlock FontWeight="Bold" FontSize="13.5" Foreground="#2563EB" Text="{Binding NoLoadRecord.IronLoss, StringFormat='{}{0:F1} W', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="回归拟合优度 R²：" />
+                                    <TextBlock FontWeight="Bold" FontSize="13.5" Foreground="#059669" Text="{Binding NoLoadRecord.RegressionR2, StringFormat='{}{0:F4}', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <!-- 第二排：额定工况插值结果 -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="额定空载电流 I₀：" />
+                                    <TextBlock FontWeight="SemiBold" FontSize="13" Foreground="#0F172A" Text="{Binding NoLoadRecord.RatedNoLoadCurrent, StringFormat='{}{0:F3} A', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="空载电流比 I₀/IN：" />
+                                    <TextBlock FontWeight="SemiBold" FontSize="13" Foreground="#0F172A" Text="{Binding NoLoadRecord.CurrentRatio, StringFormat='{}{0:F2} %', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="额定空载损耗 P₀：" />
+                                    <TextBlock FontWeight="SemiBold" FontSize="13" Foreground="#0F172A" Text="{Binding NoLoadRecord.RatedNoLoadPower, StringFormat='{}{0:F1} W', FallbackValue='--'}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Foreground="#64748B" FontSize="12.5" Text="额定功率因数 cosφ₀：" />
+                                    <TextBlock FontWeight="SemiBold" FontSize="13" Foreground="#0F172A" Text="{Binding NoLoadRecord.RatedPowerFactor, StringFormat='{}{0:F4}', FallbackValue='--'}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!--  =========================================================================  -->
+                <!--  5.ScottPlot 曲线图表-->
+                <!--  =========================================================================  -->
+                <Border Margin="0,0,0,15"
+                        Padding="1.5"
+                        Background="White"
+                        CornerRadius="8"
+                        Effect="{StaticResource EffectShadow2}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <!-- 标题栏 -->
+                        <StackPanel Grid.Row="0" Margin="0,0,0,10" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="4" Height="18" Margin="0,0,8,0" Background="#2563EB" CornerRadius="2" />
+                            <TextBlock FontSize="15" FontWeight="Bold" Foreground="#0F172A" Text="空载特性曲线" />
+                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#64748B"
+                                       Text="横轴：(U₀/Uₙ) 与 (U₀/Uₙ)² | 左侧四轴：P₀ / Pfe / Pc / I₀" />
+                        </StackPanel>
+                        <!-- 单一 ScottPlot 画布（在 StackPanel 内必须设 MinHeight，否则高度会塌陷为 0） -->
+                        <sp:WpfPlot x:Name="NoLoadPlot"
+                                    Grid.Row="1"
+                                    MinHeight="480" />
+                    </Grid>
+                </Border>
+
             </StackPanel>
         </hc:ScrollViewer>
     </Grid>

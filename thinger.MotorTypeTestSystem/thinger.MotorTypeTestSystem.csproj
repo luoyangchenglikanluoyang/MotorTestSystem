@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Folder Include="Converters\" />
+    <Folder Include="Scottplot\" />
   </ItemGroup>
 
   <ItemGroup>

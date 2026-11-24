@@ -331,7 +331,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
             try
             {
                 NoLoadRecord.TestTime = DateTime.Now;
-
+                RequestDrawPlots?.Invoke();//更新曲线
                 //空载试验曲线截图与温升试验保持统一目录：程序目录\Data\Curves\NoLoad_{流水号}.png
                 string curvesFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "Curves");
                 if (!System.IO.Directory.Exists(curvesFolder))
@@ -349,8 +349,7 @@ namespace thinger.MotorTypeTestSystem.ViewModels
                 NoLoadRecord.PointsJson = JsonSerializer.Serialize(NoLoadTestPoints);
                 bool saved = await _repo.SaveNoLoadTestRecordAsync(NoLoadRecord);
                 if (saved)
-                {
-                    RequestDrawPlots?.Invoke();
+                {                  
                     Growl.Success("空载型式试验数据保存成功！");
                     _logger.Information($"试验 [{NoLoadRecord.RecordId}] 空载数据保存成功，共 {NoLoadTestPoints.Count} 个点");
                 }
